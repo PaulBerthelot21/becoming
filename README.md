@@ -57,6 +57,12 @@ npx prisma migrate deploy
 - Better Auth + GitHub OAuth only
 - Access gated by `ALLOWED_EMAILS` (checked on user creation and on each protected page)
 
+## Cut (poids)
+
+- Objectif : départ / cible / rythme (−kg/semaine)
+- Journal de pesées + courbe 30 jours (poids, moyenne 7j, ligne cible)
+- Habitudes en leviers sous le tracking poids
+
 ## Available scripts
 
 ```bash

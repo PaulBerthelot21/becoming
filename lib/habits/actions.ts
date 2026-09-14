@@ -2,12 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createHabitSchema } from "@/lib/habits/schema";
+import { startOfUtcDay } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 import { requireWhitelistedSession } from "@/lib/session";
-
-function startOfUtcDay(date = new Date()) {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
 
 export async function createHabit(formData: FormData) {
   const session = await requireWhitelistedSession();
