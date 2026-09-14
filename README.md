@@ -6,6 +6,7 @@ The goal is to centralize personal data, visualize progress and experiment with 
 
 ## Stack
 
+- **Better Auth** — GitHub OAuth + email whitelist
 - **Next.js** — Frontend & Backend
 - **TypeScript**
 - **PostgreSQL** + **Prisma**
@@ -37,7 +38,24 @@ npm install
 cp .env.example .env
 ```
 
-3. Update `DATABASE_URL` in `.env` with your Neon PostgreSQL connection string.
+3. Update `.env`:
+
+- `DATABASE_URL` — Neon PostgreSQL connection string
+- `BETTER_AUTH_SECRET` — `openssl rand -base64 32`
+- `BETTER_AUTH_URL` — `http://localhost:3000` locally
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — GitHub OAuth App (callback `http://localhost:3000/api/auth/callback/github`)
+- `ALLOWED_EMAILS` — comma-separated whitelist of emails allowed to sign in
+
+4. Apply migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+## Auth
+
+- Better Auth + GitHub OAuth only
+- Access gated by `ALLOWED_EMAILS` (checked on user creation and on each protected page)
 
 ## Available scripts
 
