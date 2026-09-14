@@ -63,6 +63,13 @@ npx prisma migrate deploy
 - Journal de pesées + courbe 30 jours (poids, moyenne 7j, ligne cible)
 - Habitudes en leviers sous le tracking poids
 
+### Navigation
+
+- `/` — Aujourd’hui (pesée + check-in leviers)
+- `/progress` — Courbe et tendance
+- `/habits` — Gestion des leviers
+- `/goal` — Objectif cut
+
 ## Available scripts
 
 ```bash

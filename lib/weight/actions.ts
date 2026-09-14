@@ -1,8 +1,8 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { movingAverage, startOfUtcDay, toDateKey } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
+import { revalidateApp } from "@/lib/revalidate";
 import { requireWhitelistedSession } from "@/lib/session";
 import { logWeightSchema, upsertWeightGoalSchema } from "@/lib/weight/schema";
 
@@ -39,7 +39,7 @@ export async function upsertWeightGoal(formData: FormData) {
     },
   });
 
-  revalidatePath("/");
+  revalidateApp();
   return { success: true };
 }
 
@@ -78,7 +78,7 @@ export async function logWeight(formData: FormData) {
     },
   });
 
-  revalidatePath("/");
+  revalidateApp();
   return { success: true };
 }
 

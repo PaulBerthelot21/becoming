@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type WeightSummaryProps = {
   insight: {
     currentWeight: number | null;
@@ -13,13 +15,19 @@ type WeightSummaryProps = {
     weeklyRateKg: number;
   } | null;
   latestDate?: string | null;
+  /** Hides detailed stats grid for the today check-in view */
+  compact?: boolean;
 };
 
-export function WeightSummary({ insight, goal, latestDate }: WeightSummaryProps) {
+export function WeightSummary({ insight, goal, latestDate, compact = false }: WeightSummaryProps) {
   if (!goal) {
     return (
       <p className="rounded-lg border border-zinc-200 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
-        Commence par définir ton objectif cut ci-dessous.
+        Commence par définir ton{" "}
+        <Link href="/goal" className="underline underline-offset-2">
+          objectif cut
+        </Link>
+        .
       </p>
     );
   }
@@ -67,36 +75,45 @@ export function WeightSummary({ insight, goal, latestDate }: WeightSummaryProps)
         />
       </div>
 
-      <dl className="grid gap-3 text-sm sm:grid-cols-3">
-        <div>
-          <dt className="text-zinc-500">Tendance</dt>
-          <dd className="mt-0.5 font-medium">{weekLabel}</dd>
-        </div>
-        <div>
-          <dt className="text-zinc-500">Rythme cible</dt>
-          <dd className="mt-0.5 font-medium">−{goal.weeklyRateKg.toFixed(1)} kg/sem</dd>
-        </div>
-        <div>
-          <dt className="text-zinc-500">Projection</dt>
-          <dd className="mt-0.5 font-medium">
-            {insight.estimatedWeeksLeft == null
-              ? "—"
-              : insight.estimatedWeeksLeft === 0
-                ? "Cible atteinte"
-                : `~${insight.estimatedWeeksLeft} sem.`}
-          </dd>
-        </div>
-      </dl>
+      {!compact ? (
+        <>
+          <dl className="grid gap-3 text-sm sm:grid-cols-3">
+            <div>
+              <dt className="text-zinc-500">Tendance</dt>
+              <dd className="mt-0.5 font-medium">{weekLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Rythme cible</dt>
+              <dd className="mt-0.5 font-medium">−{goal.weeklyRateKg.toFixed(1)} kg/sem</dd>
+            </div>
+            <div>
+              <dt className="text-zinc-500">Projection</dt>
+              <dd className="mt-0.5 font-medium">
+                {insight.estimatedWeeksLeft == null
+                  ? "—"
+                  : insight.estimatedWeeksLeft === 0
+                    ? "Cible atteinte"
+                    : `~${insight.estimatedWeeksLeft} sem.`}
+              </dd>
+            </div>
+          </dl>
 
-      <p
-        className={`text-sm ${
-          insight.onTrack === false
-            ? "text-amber-700 dark:text-amber-300"
-            : "text-zinc-600 dark:text-zinc-400"
-        }`}
-      >
-        {trackLabel}
-      </p>
+          <p
+            className={`text-sm ${
+              insight.onTrack === false
+                ? "text-amber-700 dark:text-amber-300"
+                : "text-zinc-600 dark:text-zinc-400"
+            }`}
+          >
+            {trackLabel}
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          {weekLabel}
+          {insight.onTrack === false ? " · sous le rythme" : null}
+        </p>
+      )}
     </section>
   );
 }

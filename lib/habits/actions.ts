@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createHabitSchema } from "@/lib/habits/schema";
 import { startOfUtcDay } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
+import { revalidateApp } from "@/lib/revalidate";
 import { requireWhitelistedSession } from "@/lib/session";
 
 export async function createHabit(formData: FormData) {
@@ -25,7 +25,7 @@ export async function createHabit(formData: FormData) {
     },
   });
 
-  revalidatePath("/");
+  revalidateApp();
   return { success: true };
 }
 
@@ -41,7 +41,7 @@ export async function deleteHabit(habitId: string) {
   }
 
   await prisma.habit.delete({ where: { id: habitId } });
-  revalidatePath("/");
+  revalidateApp();
   return { success: true };
 }
 
@@ -77,7 +77,7 @@ export async function toggleHabitCompletion(habitId: string) {
     });
   }
 
-  revalidatePath("/");
+  revalidateApp();
   return { success: true };
 }
 

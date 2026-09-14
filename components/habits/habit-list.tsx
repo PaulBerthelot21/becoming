@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 
 type HabitItem = {
   id: string;
@@ -14,7 +15,9 @@ type HabitItem = {
 type HabitListProps = {
   habits: HabitItem[];
   toggleAction: (habitId: string) => Promise<{ error?: string; success?: boolean }>;
-  deleteAction: (habitId: string) => Promise<{ error?: string; success?: boolean }>;
+  deleteAction?: (habitId: string) => Promise<{ error?: string; success?: boolean }>;
+  /** checkin = today view; manage = habits admin */
+  mode?: "checkin" | "manage";
 };
 
 function lastSevenDays() {
@@ -31,14 +34,21 @@ function lastSevenDays() {
   return days;
 }
 
-export function HabitList({ habits, toggleAction, deleteAction }: HabitListProps) {
+export function HabitList({ habits, toggleAction, deleteAction, mode = "manage" }: HabitListProps) {
   const [pending, startTransition] = useTransition();
   const week = lastSevenDays();
 
   if (habits.length === 0) {
     return (
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Aucune habitude pour l&apos;instant. Ajoute la première ci-dessus.
+        Aucun levier pour l&apos;instant.{" "}
+        {mode === "checkin" ? (
+          <Link href="/habits" className="underline underline-offset-2">
+            Ajoute-en sur Leviers
+          </Link>
+        ) : (
+          "Ajoute le premier ci-dessus."
+        )}
       </p>
     );
   }
@@ -63,34 +73,50 @@ export function HabitList({ habits, toggleAction, deleteAction }: HabitListProps
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() =>
-                  startTransition(async () => {
-                    await toggleAction(habit.id);
-                  })
-                }
-                className={`h-9 rounded-md px-3 text-sm font-medium transition ${
-                  habit.completedToday
-                    ? "bg-emerald-600 text-white hover:bg-emerald-500"
-                    : "border border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
-                }`}
-              >
-                {habit.completedToday ? "Fait" : "Cocher"}
-              </button>
-              <button
-                type="button"
-                disabled={pending}
-                onClick={() =>
-                  startTransition(async () => {
-                    await deleteAction(habit.id);
-                  })
-                }
-                className="h-9 rounded-md px-3 text-sm text-zinc-500 transition hover:bg-zinc-50 hover:text-red-600 dark:hover:bg-zinc-900"
-              >
-                Supprimer
-              </button>
+              {mode === "checkin" ? (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() =>
+                    startTransition(async () => {
+                      await toggleAction(habit.id);
+                    })
+                  }
+                  className={`h-9 cursor-pointer rounded-md px-3 text-sm font-medium transition ${
+                    habit.completedToday
+                      ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                      : "border border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  {habit.completedToday ? "Fait" : "Cocher"}
+                </button>
+              ) : (
+                <>
+                  <span
+                    className={`rounded-md px-2 py-1 text-xs font-medium ${
+                      habit.completedToday
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                        : "bg-zinc-100 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400"
+                    }`}
+                  >
+                    {habit.completedToday ? "Fait aujourd'hui" : "Pas encore"}
+                  </span>
+                  {deleteAction ? (
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() =>
+                        startTransition(async () => {
+                          await deleteAction(habit.id);
+                        })
+                      }
+                      className="h-9 cursor-pointer rounded-md px-3 text-sm text-zinc-500 transition hover:bg-zinc-50 hover:text-red-600 dark:hover:bg-zinc-900"
+                    >
+                      Supprimer
+                    </button>
+                  ) : null}
+                </>
+              )}
             </div>
           </div>
           <div className="flex gap-1.5" aria-label="Progression sur 7 jours">
