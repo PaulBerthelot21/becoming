@@ -1,74 +1,109 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-type LogWeightFormProps = {
-  action: (formData: FormData) => Promise<{ error?: string; success?: boolean }>;
-  defaultWeight?: number | null;
-  today: string;
+type LogWeightResult = {
+  error?: string;
+  success?: boolean;
+  updated?: boolean;
+  weightKg?: number;
+  date?: string;
 };
 
-export function LogWeightForm({ action, defaultWeight, today }: LogWeightFormProps) {
+type LogWeightFormProps = {
+  action: (formData: FormData) => Promise<LogWeightResult>;
+  defaultWeight?: number | null;
+  today: string;
+  weighedToday?: boolean;
+  todayWeight?: number | null;
+};
+
+export function LogWeightForm({
+  action,
+  defaultWeight,
+  today,
+  weighedToday = false,
+  todayWeight,
+}: LogWeightFormProps) {
   const [pending, startTransition] = useTransition();
+  const [doneToday, setDoneToday] = useState(weighedToday);
+  const [lastLogged, setLastLogged] = useState<number | null>(todayWeight ?? null);
 
   return (
-    <form
-      className="space-y-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-      action={(formData) => {
-        startTransition(async () => {
-          await action(formData);
-        });
-      }}
-    >
-      <div>
-        <h2 className="text-sm font-semibold">Pesée</h2>
-        <p className="mt-0.5 text-xs text-zinc-500">
-          Une mesure par jour suffit. La moyenne 7j lisse les variations d&apos;eau.
-        </p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-        <label className="space-y-1 text-sm">
-          <span className="font-medium">Poids (kg)</span>
-          <input
-            name="weightKg"
-            type="number"
-            step="0.1"
-            min={30}
-            max={400}
-            required
-            defaultValue={defaultWeight ?? ""}
-            placeholder="78.4"
-            className="h-10 w-full rounded-md border border-zinc-200 bg-transparent px-3 text-sm outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-800"
-          />
-        </label>
-        <label className="space-y-1 text-sm">
-          <span className="font-medium">Date</span>
-          <input
-            name="date"
-            type="date"
-            defaultValue={today}
-            className="h-10 w-full rounded-md border border-zinc-200 bg-transparent px-3 text-sm outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-800"
-          />
-        </label>
-        <div className="flex items-end">
-          <button
-            type="submit"
-            disabled={pending}
-            className="inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-md bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-60 sm:w-auto"
-          >
-            {pending ? "…" : "Logger"}
-          </button>
+    <Card>
+      <CardHeader className="gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <CardTitle>Pesée</CardTitle>
+          {doneToday ? (
+            <Badge variant="secondary">Déjà pesé aujourd&apos;hui</Badge>
+          ) : (
+            <Badge variant="outline">Pas encore pesé</Badge>
+          )}
         </div>
-      </div>
-      <label className="block space-y-1 text-sm">
-        <span className="font-medium">Note (optionnel)</span>
-        <input
-          name="note"
-          maxLength={280}
-          placeholder="Ex. matin à jeun"
-          className="h-10 w-full rounded-md border border-zinc-200 bg-transparent px-3 text-sm outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-800"
-        />
-      </label>
-    </form>
+        <CardDescription>
+          {doneToday
+            ? `Tu as loggé ${lastLogged?.toFixed(1) ?? "—"} kg. Tu peux mettre à jour si besoin.`
+            : "Une mesure par jour suffit. La moyenne 7j lisse les variations d'eau."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="space-y-4"
+          action={(formData) => {
+            startTransition(async () => {
+              const result = await action(formData);
+              if (result.error) {
+                toast.error(result.error);
+                return;
+              }
+
+              setDoneToday(true);
+              setLastLogged(result.weightKg ?? null);
+              toast.success(
+                result.updated
+                  ? `Pesée mise à jour · ${result.weightKg?.toFixed(1)} kg`
+                  : `Pesée enregistrée · ${result.weightKg?.toFixed(1)} kg`,
+              );
+            });
+          }}
+        >
+          <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+            <div className="space-y-2">
+              <Label htmlFor="weightKg">Poids (kg)</Label>
+              <Input
+                id="weightKg"
+                name="weightKg"
+                type="number"
+                step="0.1"
+                min={30}
+                max={400}
+                required
+                defaultValue={defaultWeight ?? ""}
+                placeholder="78.4"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="date">Date</Label>
+              <Input id="date" name="date" type="date" defaultValue={today} />
+            </div>
+            <div className="flex items-end">
+              <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+                {pending ? "…" : doneToday ? "Mettre à jour" : "Logger"}
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="note">Note (optionnel)</Label>
+            <Input id="note" name="note" maxLength={280} placeholder="Ex. matin à jeun" />
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

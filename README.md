@@ -66,8 +66,8 @@ npx prisma migrate deploy
 ### Navigation
 
 - `/` — Aujourd’hui (pesée + check-in leviers)
-- `/progress` — Courbe et tendance
-- `/habits` — Gestion des leviers
+- `/progress` — Courbe, tendance et historique éditable
+- `/habits` — Templates cut + gestion des leviers
 - `/goal` — Objectif cut
 
 ## Available scripts

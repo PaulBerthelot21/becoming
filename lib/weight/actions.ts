@@ -4,7 +4,11 @@ import { movingAverage, startOfUtcDay, toDateKey } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 import { revalidateApp } from "@/lib/revalidate";
 import { requireWhitelistedSession } from "@/lib/session";
-import { logWeightSchema, upsertWeightGoalSchema } from "@/lib/weight/schema";
+import {
+  logWeightSchema,
+  updateWeightEntrySchema,
+  upsertWeightGoalSchema,
+} from "@/lib/weight/schema";
 
 export async function upsertWeightGoal(formData: FormData) {
   const session = await requireWhitelistedSession();
@@ -59,6 +63,16 @@ export async function logWeight(formData: FormData) {
     ? startOfUtcDay(new Date(`${parsed.data.date}T00:00:00.000Z`))
     : startOfUtcDay();
 
+  const existing = await prisma.weightEntry.findUnique({
+    where: {
+      userId_date: {
+        userId: session.user.id,
+        date,
+      },
+    },
+    select: { id: true },
+  });
+
   await prisma.weightEntry.upsert({
     where: {
       userId_date: {
@@ -79,7 +93,75 @@ export async function logWeight(formData: FormData) {
   });
 
   revalidateApp();
+  return {
+    success: true as const,
+    updated: Boolean(existing),
+    weightKg: parsed.data.weightKg,
+    date: toDateKey(date),
+  };
+}
+
+export async function updateWeightEntry(formData: FormData) {
+  const session = await requireWhitelistedSession();
+  const parsed = updateWeightEntrySchema.safeParse({
+    id: formData.get("id"),
+    weightKg: formData.get("weightKg"),
+    note: formData.get("note") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
+  }
+
+  const existing = await prisma.weightEntry.findFirst({
+    where: { id: parsed.data.id, userId: session.user.id },
+  });
+
+  if (!existing) {
+    return { error: "Pesée introuvable" };
+  }
+
+  await prisma.weightEntry.update({
+    where: { id: existing.id },
+    data: {
+      weightKg: parsed.data.weightKg,
+      note: parsed.data.note || null,
+    },
+  });
+
+  revalidateApp();
   return { success: true };
+}
+
+export async function deleteWeightEntry(entryId: string) {
+  const session = await requireWhitelistedSession();
+
+  const existing = await prisma.weightEntry.findFirst({
+    where: { id: entryId, userId: session.user.id },
+  });
+
+  if (!existing) {
+    return { error: "Pesée introuvable" };
+  }
+
+  await prisma.weightEntry.delete({ where: { id: existing.id } });
+  revalidateApp();
+  return { success: true };
+}
+
+export async function getWeightHistory(userId: string, limit = 60) {
+  const entries = await prisma.weightEntry.findMany({
+    where: { userId },
+    orderBy: { date: "desc" },
+    take: limit,
+  });
+
+  return entries.map((entry) => ({
+    id: entry.id,
+    date: toDateKey(entry.date),
+    weightKg: entry.weightKg,
+    note: entry.note,
+  }));
 }
 
 export async function getWeightDashboard(userId: string) {
@@ -101,6 +183,15 @@ export async function getWeightDashboard(userId: string) {
   const latest = await prisma.weightEntry.findFirst({
     where: { userId },
     orderBy: { date: "desc" },
+  });
+
+  const todayEntry = await prisma.weightEntry.findUnique({
+    where: {
+      userId_date: {
+        userId,
+        date: today,
+      },
+    },
   });
 
   const byDate = new Map(entries.map((entry) => [toDateKey(entry.date), entry.weightKg]));
@@ -168,6 +259,14 @@ export async function getWeightDashboard(userId: string) {
           weightKg: latest.weightKg,
           date: toDateKey(latest.date),
           note: latest.note,
+        }
+      : null,
+    weighedToday: Boolean(todayEntry),
+    todayEntry: todayEntry
+      ? {
+          weightKg: todayEntry.weightKg,
+          date: toDateKey(todayEntry.date),
+          note: todayEntry.note,
         }
       : null,
     chart: {

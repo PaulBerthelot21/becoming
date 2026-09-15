@@ -1,4 +1,5 @@
 import {
+  addHabitFromTemplate,
   createHabit,
   deleteHabit,
   getHabitStreak,
@@ -8,6 +9,7 @@ import {
 import { requireWhitelistedSession } from "@/lib/session";
 import { CreateHabitForm } from "@/components/habits/create-habit-form";
 import { HabitList } from "@/components/habits/habit-list";
+import { HabitTemplates } from "@/components/habits/habit-templates";
 
 export default async function HabitsPage() {
   const session = await requireWhitelistedSession();
@@ -24,10 +26,15 @@ export default async function HabitsPage() {
     <>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Leviers</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Crée et gère ce que tu coches chaque jour (marche, protéines, sport…).
+        <p className="mt-1 text-sm text-muted-foreground">
+          Templates cut ou levier custom — coches-les chaque jour.
         </p>
       </div>
+
+      <HabitTemplates
+        existingNames={habits.map((habit) => habit.name)}
+        addAction={addHabitFromTemplate}
+      />
 
       <CreateHabitForm action={createHabit} />
 

@@ -1,6 +1,7 @@
 "use server";
 
 import { createHabitSchema } from "@/lib/habits/schema";
+import { CUT_HABIT_TEMPLATES, type CutHabitTemplateId } from "@/lib/habits/templates";
 import { startOfUtcDay } from "@/lib/date";
 import { prisma } from "@/lib/prisma";
 import { revalidateApp } from "@/lib/revalidate";
@@ -22,6 +23,37 @@ export async function createHabit(formData: FormData) {
       userId: session.user.id,
       name: parsed.data.name,
       description: parsed.data.description || null,
+    },
+  });
+
+  revalidateApp();
+  return { success: true };
+}
+
+export async function addHabitFromTemplate(templateId: CutHabitTemplateId) {
+  const session = await requireWhitelistedSession();
+  const template = CUT_HABIT_TEMPLATES.find((item) => item.id === templateId);
+
+  if (!template) {
+    return { error: "Template introuvable" };
+  }
+
+  const existing = await prisma.habit.findFirst({
+    where: {
+      userId: session.user.id,
+      name: template.name,
+    },
+  });
+
+  if (existing) {
+    return { error: `"${template.name}" est déjà dans tes leviers.` };
+  }
+
+  await prisma.habit.create({
+    data: {
+      userId: session.user.id,
+      name: template.name,
+      description: template.description,
     },
   });
 

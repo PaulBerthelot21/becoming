@@ -14,3 +14,9 @@ export const logWeightSchema = z.object({
     .optional(),
   note: z.string().trim().max(280).optional(),
 });
+
+export const updateWeightEntrySchema = z.object({
+  id: z.string().min(1),
+  weightKg: z.coerce.number().min(30).max(400),
+  note: z.string().trim().max(280).optional(),
+});
