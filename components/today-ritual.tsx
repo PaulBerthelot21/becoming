@@ -50,10 +50,10 @@ export function TodayRitual({ items }: TodayRitualProps) {
             <Link
               href={item.href}
               className={cn(
-                "flex h-full min-h-[4.5rem] items-start gap-3 rounded-2xl border px-3.5 py-3 transition",
+                "glass flex h-full min-h-[4.5rem] items-start gap-3 rounded-2xl px-3.5 py-3 transition",
                 item.done
-                  ? "border-primary/25 bg-primary/8"
-                  : "border-border/70 bg-card/80 hover:border-primary/20 hover:bg-card",
+                  ? "border-primary/30 bg-primary/10"
+                  : "hover:border-white/20 hover:bg-white/5",
               )}
             >
               {item.done ? (

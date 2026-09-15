@@ -21,17 +21,17 @@ export function ScreenHero({ eyebrow, title, subtitle, children, className }: Sc
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-primary/10 via-background to-accent/40 px-4 py-5 md:px-6 md:py-6",
+        "glass relative overflow-hidden rounded-3xl px-4 py-4 md:px-6 md:py-5",
         className,
       )}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-16 -right-10 size-44 rounded-full bg-primary/15 blur-3xl"
+        className="pointer-events-none absolute -top-16 -right-10 size-44 rounded-full bg-primary/20 blur-3xl"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-20 -left-8 size-40 rounded-full bg-accent/50 blur-3xl"
+        className="pointer-events-none absolute -bottom-20 -left-8 size-40 rounded-full bg-white/5 blur-3xl"
       />
       <div className="relative">
         <p className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">

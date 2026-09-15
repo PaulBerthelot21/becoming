@@ -7,8 +7,7 @@ import { formatDateFr, startOfUtcDay, toDateKey } from "@/lib/date";
 import { requireWhitelistedSession } from "@/lib/session";
 import { getWeightDashboard, logWeight } from "@/lib/weight/actions";
 import { HabitList } from "@/components/habits/habit-list";
-import { LogWeightForm } from "@/components/weight/log-weight-form";
-import { WeightSummary } from "@/components/weight/weight-summary";
+import { TodayWeightRecap } from "@/components/weight/today-weight-recap";
 import { TodayRitual } from "@/components/today-ritual";
 import { WeeklyInsightsCard } from "@/components/weekly-insights-card";
 import { ScreenHero } from "@/components/screen-hero";
@@ -49,7 +48,7 @@ export default async function TodayPage() {
       />
 
       {!weight.goal ? (
-        <section className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 to-accent/30 px-4 py-5 md:px-5">
+        <section className="glass relative overflow-hidden rounded-3xl px-4 py-5 md:px-5">
           <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
             Première étape
           </p>
@@ -62,6 +61,33 @@ export default async function TodayPage() {
           </Button>
         </section>
       ) : null}
+
+      <TodayWeightRecap
+        action={logWeight}
+        today={today}
+        currentWeight={weight.insight.currentWeight}
+        startWeightKg={weight.goal?.startWeightKg ?? null}
+        latestDate={weight.latest?.date}
+        weighedToday={weight.weighedToday}
+        todayWeight={todayWeight}
+        defaultWeight={todayWeight ?? weight.latest?.weightKg}
+      />
+
+      {coachNote ? (
+        <p className="glass rounded-2xl px-4 py-3 text-sm leading-relaxed">{coachNote}</p>
+      ) : null}
+
+      <TodayFoodPanel
+        today={today}
+        favorites={favorites}
+        createFromFavoriteAction={createFoodFromFavorite}
+        totals={food.totals}
+        goal={food.goal}
+        progress={food.progress}
+        recentNames={food.entries.slice(0, 3)}
+      />
+
+      <WeeklyInsightsCard lines={insights.lines} from={insights.from} to={insights.to} />
 
       <TodayRitual
         items={[
@@ -95,47 +121,6 @@ export default async function TodayPage() {
         ]}
       />
 
-      {coachNote ? (
-        <p className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3 text-sm leading-relaxed">
-          {coachNote}
-        </p>
-      ) : null}
-
-      <WeeklyInsightsCard lines={insights.lines} from={insights.from} to={insights.to} />
-
-      <div className="grid gap-8 md:grid-cols-2 md:items-start md:gap-10">
-        <div id="pesee" className="space-y-4">
-          <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-            Poids
-          </p>
-          {weight.goal ? (
-            <WeightSummary
-              insight={weight.insight}
-              goal={weight.goal}
-              latestDate={weight.latest?.date}
-              compact
-            />
-          ) : null}
-          <LogWeightForm
-            action={logWeight}
-            defaultWeight={todayWeight ?? weight.latest?.weightKg}
-            today={today}
-            weighedToday={weight.weighedToday}
-            todayWeight={todayWeight}
-          />
-        </div>
-
-        <TodayFoodPanel
-          today={today}
-          favorites={favorites}
-          createFromFavoriteAction={createFoodFromFavorite}
-          totals={food.totals}
-          goal={food.goal}
-          progress={food.progress}
-          recentNames={food.entries.slice(0, 3)}
-        />
-      </div>
-
       <section id="leviers" className="space-y-4">
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -156,7 +141,7 @@ export default async function TodayPage() {
           </Link>
         </div>
         {habitsWithStreak.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center">
+          <div className="glass rounded-2xl border-dashed px-4 py-8 text-center">
             <p className="text-sm font-medium">Aucun levier</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Ajoute des templates cut sur{" "}

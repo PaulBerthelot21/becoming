@@ -34,7 +34,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         defaultMealType={defaultMealTypeForNow()}
       />
       <AppNav user={{ name: session.user.name, image: session.user.image }} />
-      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-8 pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-8 pb-[calc(8.25rem+env(safe-area-inset-bottom))] md:pb-8">
         <PageMotion>{children}</PageMotion>
       </div>
       <Toaster richColors closeButton position="top-center" />

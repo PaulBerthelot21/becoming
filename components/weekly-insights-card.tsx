@@ -16,7 +16,7 @@ export function WeeklyInsightsCard({ lines, from, to }: WeeklyInsightsCardProps)
       initial={reduceMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1, duration: 0.3 }}
-      className="rounded-2xl border border-border/70 bg-card/80 px-4 py-4 backdrop-blur md:px-5"
+      className="glass rounded-2xl px-4 py-4 md:px-5"
     >
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>

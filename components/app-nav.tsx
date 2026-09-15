@@ -45,7 +45,7 @@ export function AppNav({ user }: AppNavProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur md:static md:bg-background md:pt-0">
+      <header className="glass sticky top-0 z-40 border-b-0 border-white/10 pt-[env(safe-area-inset-top)] md:static md:border-0 md:bg-transparent md:pt-0 md:shadow-none md:backdrop-filter-none">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3 md:py-4">
           <div className="min-w-0">
             <p className="text-sm font-semibold tracking-tight">Becoming</p>
@@ -58,10 +58,10 @@ export function AppNav({ user }: AppNavProps) {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      "rounded-md px-2.5 py-1.5 text-sm transition",
+                      "rounded-lg px-2.5 py-1.5 text-sm transition",
                       active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                        ? "bg-primary text-primary-foreground shadow-[inset_0_1px_0_oklch(1_0_0_/_18%)]"
+                        : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
                     )}
                   >
                     {link.label}
@@ -88,10 +88,10 @@ export function AppNav({ user }: AppNavProps) {
       </header>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 backdrop-blur md:hidden"
+        className="glass fixed inset-x-0 bottom-0 z-40 border-t-0 border-white/10 md:hidden"
         aria-label="Navigation mobile"
       >
-        <ul className="mx-auto grid max-w-5xl grid-cols-5 items-end px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5">
+        <ul className="mx-auto grid max-w-5xl grid-cols-5 items-center px-1 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))]">
           {left.map((link) => {
             const active = isActive(pathname, link.href);
             const Icon = link.icon;
@@ -101,7 +101,7 @@ export function AppNav({ user }: AppNavProps) {
                 <Link
                   href={link.href}
                   className={cn(
-                    "flex min-h-11 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] transition",
+                    "flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] transition",
                     active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
@@ -112,7 +112,7 @@ export function AppNav({ user }: AppNavProps) {
             );
           })}
 
-          <li className="flex justify-center">
+          <li className="flex justify-center self-stretch pt-0.5 pb-0.5">
             <motion.button
               type="button"
               aria-label="Ajouter un repas"
@@ -122,7 +122,7 @@ export function AppNav({ user }: AppNavProps) {
               whileTap={available && !reduceMotion ? { scale: 0.94 } : undefined}
               onClick={() => available && setOpen(true)}
               className={cn(
-                "-mt-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-md",
+                "flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_8px_24px_oklch(0.7_0.1_165_/_35%),inset_0_1px_0_oklch(1_0_0_/_25%)]",
                 !available && "opacity-40",
               )}
             >
@@ -139,7 +139,7 @@ export function AppNav({ user }: AppNavProps) {
                 <Link
                   href={link.href}
                   className={cn(
-                    "flex min-h-11 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] transition",
+                    "flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] transition",
                     active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
