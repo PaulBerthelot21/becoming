@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Activity, Goal, Home, ListChecks, UtensilsCrossed } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -23,8 +24,8 @@ export function AppNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur md:static md:bg-background">
-        <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 px-6 py-4">
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur md:static md:bg-background md:pt-0">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3 md:py-4">
           <div className="min-w-0">
             <p className="text-sm font-semibold tracking-tight">Becoming</p>
             <nav className="mt-2 hidden flex-wrap gap-1 md:flex" aria-label="Principal">
@@ -48,7 +49,10 @@ export function AppNav() {
               })}
             </nav>
           </div>
-          <SignOutButton />
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <SignOutButton />
+          </div>
         </div>
       </header>
 
@@ -56,7 +60,7 @@ export function AppNav() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 backdrop-blur md:hidden"
         aria-label="Navigation mobile"
       >
-        <ul className="mx-auto grid max-w-2xl grid-cols-5 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+        <ul className="mx-auto grid max-w-5xl grid-cols-5 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
           {links.map((link) => {
             const active = isActive(pathname, link.href);
             const Icon = link.icon;
@@ -66,7 +70,7 @@ export function AppNav() {
                 <Link
                   href={link.href}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-md px-1 py-2 text-[10px] transition",
+                    "flex min-h-11 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[10px] transition",
                     active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
                 >

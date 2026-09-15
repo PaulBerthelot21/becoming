@@ -12,14 +12,16 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test --pass-with-no-tests",
+    "test:e2e": "playwright test",
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^3.0.194",
     "@better-auth/prisma-adapter": "^1.7.4",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@vercel/blob": "^2.8.0",
+    "ai": "^6.0.283",
     "better-auth": "^1.7.4",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",

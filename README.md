@@ -66,10 +66,12 @@ npx prisma migrate deploy
 ### Navigation
 
 - `/` — Aujourd’hui (rituel coach + pesée + alim + leviers)
-- `/food` — Suivi alimentaire multi-jours + photos optionnelles (Vercel Blob **Private** + `BLOB_READ_WRITE_TOKEN`)
-- `/progress` — Courbe, insights semaine, historique pesées
-- `/habits` — Templates cut + gestion des leviers
-- `/goal` — Objectif cut + cibles kcal/protéines
+- `/food` — Suivi alimentaire multi-jours + photos optionnelles (Vercel Blob **Private** + `BLOB_READ_WRITE_TOKEN`), édition, favoris, copier hier, estimation macros IA
+- `/progress` — Courbe, insights semaine, leviers %, historique pesées
+- `/habits` — Templates cut + gestion des leviers (jours passés cliquables)
+- `/goal` — Objectif cut + cibles kcal/protéines + export/import + cleanup blobs
+
+Photos / IA optionnels : `BLOB_READ_WRITE_TOKEN`, `AI_GATEWAY_API_KEY`.
 
 ## Available scripts
 

@@ -77,9 +77,12 @@ export async function deleteHabit(habitId: string) {
   return { success: true };
 }
 
-export async function toggleHabitCompletion(habitId: string) {
+export async function toggleHabitCompletion(habitId: string, dateKey?: string) {
   const session = await requireWhitelistedSession();
-  const today = startOfUtcDay();
+  const day =
+    dateKey && /^\d{4}-\d{2}-\d{2}$/.test(dateKey)
+      ? startOfUtcDay(new Date(`${dateKey}T00:00:00.000Z`))
+      : startOfUtcDay();
 
   const habit = await prisma.habit.findFirst({
     where: { id: habitId, userId: session.user.id },
@@ -93,7 +96,7 @@ export async function toggleHabitCompletion(habitId: string) {
     where: {
       habitId_date: {
         habitId,
-        date: today,
+        date: day,
       },
     },
   });
@@ -104,13 +107,28 @@ export async function toggleHabitCompletion(habitId: string) {
     await prisma.habitCompletion.create({
       data: {
         habitId,
-        date: today,
+        date: day,
       },
     });
   }
 
   revalidateApp();
   return { success: true };
+}
+
+export async function getHabitsWeekRate(userId: string) {
+  const habits = await getHabitsForUser(userId);
+  if (habits.length === 0) {
+    return { ratePct: null as number | null, done: 0, total: 0 };
+  }
+
+  const done = habits.reduce((sum, habit) => sum + habit.weekCompletions.length, 0);
+  const total = habits.length * 7;
+  return {
+    ratePct: Math.round((done / total) * 100),
+    done,
+    total,
+  };
 }
 
 export async function getHabitsForUser(userId: string) {

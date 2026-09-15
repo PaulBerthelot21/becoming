@@ -1,22 +1,20 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { Star } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ResponsiveModal } from "@/components/ui/responsive-modal";
+import { LogFoodForm, type FoodFormDefaults } from "@/components/food/log-food-form";
 import { mealImageSrc } from "@/lib/blob";
 import { mealTypeLabels, mealTypes } from "@/lib/food/schema";
 
-type FoodItem = {
+type FoodItem = FoodFormDefaults & {
   id: string;
   name: string;
-  notes: string | null;
-  imageUrl: string | null;
-  calories: number | null;
-  proteinG: number | null;
-  carbsG: number | null;
-  fatG: number | null;
+  mealType: (typeof mealTypes)[number];
 };
 
 type FoodDayListProps = {
@@ -37,7 +35,21 @@ type FoodDayListProps = {
     caloriesPct: number;
     proteinPct: number;
   } | null;
+  selectedDate: string;
+  photosEnabled?: boolean;
   deleteAction: (entryId: string) => Promise<{ error?: string; success?: boolean }>;
+  updateAction: (formData: FormData) => Promise<{ error?: string; success?: boolean }>;
+  favoriteAction: (entryId: string) => Promise<{ error?: string; success?: boolean }>;
+  estimateMacrosAction?: (imageUrl: string) => Promise<
+    | { error: string }
+    | {
+        calories: number | null;
+        proteinG: number | null;
+        carbsG: number | null;
+        fatG: number | null;
+        name?: string | null;
+      }
+  >;
 };
 
 function macroLine(item: FoodItem) {
@@ -80,8 +92,20 @@ function ProgressBar({
   );
 }
 
-export function FoodDayList({ byMeal, totals, goal, progress, deleteAction }: FoodDayListProps) {
+export function FoodDayList({
+  byMeal,
+  totals,
+  goal,
+  progress,
+  selectedDate,
+  photosEnabled = false,
+  deleteAction,
+  updateAction,
+  favoriteAction,
+  estimateMacrosAction,
+}: FoodDayListProps) {
   const [pending, startTransition] = useTransition();
+  const [editing, setEditing] = useState<FoodItem | null>(null);
 
   return (
     <div className="space-y-4">
@@ -162,25 +186,57 @@ export function FoodDayList({ byMeal, totals, goal, progress, deleteAction }: Fo
                         ) : null}
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      disabled={pending}
-                      className="text-destructive hover:text-destructive"
-                      onClick={() =>
-                        startTransition(async () => {
-                          const result = await deleteAction(item.id);
-                          if (result.error) {
-                            toast.error(result.error);
-                            return;
-                          }
-                          toast.success("Entrée supprimée");
-                        })
-                      }
-                    >
-                      Suppr.
-                    </Button>
+                    <div className="flex shrink-0 flex-col gap-1 sm:flex-row">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-11 min-w-11 md:h-8"
+                        disabled={pending}
+                        aria-label="Ajouter aux favoris"
+                        onClick={() =>
+                          startTransition(async () => {
+                            const result = await favoriteAction(item.id);
+                            if (result.error) {
+                              toast.error(result.error);
+                              return;
+                            }
+                            toast.success("Ajouté aux favoris");
+                          })
+                        }
+                      >
+                        <Star className="size-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-11 md:h-8"
+                        disabled={pending}
+                        onClick={() => setEditing(item)}
+                      >
+                        Modif.
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={pending}
+                        className="h-11 text-destructive hover:text-destructive md:h-8"
+                        onClick={() =>
+                          startTransition(async () => {
+                            const result = await deleteAction(item.id);
+                            if (result.error) {
+                              toast.error(result.error);
+                              return;
+                            }
+                            toast.success("Entrée supprimée");
+                          })
+                        }
+                      >
+                        Suppr.
+                      </Button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -188,6 +244,28 @@ export function FoodDayList({ byMeal, totals, goal, progress, deleteAction }: Fo
           </Card>
         );
       })}
+
+      <ResponsiveModal
+        open={Boolean(editing)}
+        onClose={() => setEditing(null)}
+        title="Modifier le repas"
+      >
+        {editing ? (
+          <LogFoodForm
+            mode="edit"
+            embedded
+            action={updateAction}
+            today={selectedDate}
+            photosEnabled={photosEnabled}
+            estimateMacrosAction={estimateMacrosAction}
+            defaults={{
+              ...editing,
+              date: selectedDate,
+            }}
+            onSuccess={() => setEditing(null)}
+          />
+        ) : null}
+      </ResponsiveModal>
     </div>
   );
 }

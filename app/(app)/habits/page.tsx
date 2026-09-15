@@ -27,23 +27,25 @@ export default async function HabitsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Leviers</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Templates cut ou levier custom — coches-les chaque jour.
+          Templates cut ou levier custom — coches aussi les jours passés sur la bande.
         </p>
       </div>
 
-      <HabitTemplates
-        existingNames={habits.map((habit) => habit.name)}
-        addAction={addHabitFromTemplate}
-      />
-
-      <CreateHabitForm action={createHabit} />
-
-      <HabitList
-        habits={habitsWithStreak}
-        toggleAction={toggleHabitCompletion}
-        deleteAction={deleteHabit}
-        mode="manage"
-      />
+      <div className="grid gap-6 md:grid-cols-2 md:items-start">
+        <div className="space-y-6">
+          <HabitTemplates
+            existingNames={habits.map((habit) => habit.name)}
+            addAction={addHabitFromTemplate}
+          />
+          <CreateHabitForm action={createHabit} />
+        </div>
+        <HabitList
+          habits={habitsWithStreak}
+          toggleAction={toggleHabitCompletion}
+          deleteAction={deleteHabit}
+          mode="manage"
+        />
+      </div>
     </>
   );
 }

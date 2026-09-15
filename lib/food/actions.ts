@@ -4,9 +4,11 @@ import { del } from "@vercel/blob";
 import { isVercelBlobUrl, mealBlobBelongsToUser } from "@/lib/blob";
 import { startOfUtcDay, toDateKey } from "@/lib/date";
 import {
+  copyFoodDaySchema,
   createFoodEntrySchema,
   mealTypes,
   parseFoodMacros,
+  updateFoodEntrySchema,
   upsertNutritionGoalSchema,
 } from "@/lib/food/schema";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +17,7 @@ import { requireWhitelistedSession } from "@/lib/session";
 
 type FoodItem = {
   id: string;
+  mealType: (typeof mealTypes)[number];
   name: string;
   notes: string | null;
   imageUrl: string | null;
@@ -71,6 +74,7 @@ function summarizeEntries(
         .filter((entry) => entry.mealType === mealType)
         .map((entry): FoodItem => ({
           id: entry.id,
+          mealType: entry.mealType,
           name: entry.name,
           notes: entry.notes,
           imageUrl: entry.imageUrl,
@@ -185,6 +189,226 @@ export async function createFoodEntry(formData: FormData) {
       proteinG: macros.proteinG,
       carbsG: macros.carbsG,
       fatG: macros.fatG,
+    },
+  });
+
+  revalidateApp();
+  return { success: true };
+}
+
+export async function updateFoodEntry(formData: FormData) {
+  const session = await requireWhitelistedSession();
+  const imageUrlRaw = String(formData.get("imageUrl") || "").trim();
+  const clearImage = String(formData.get("clearImage") || "") === "1";
+
+  const parsed = updateFoodEntrySchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    mealType: formData.get("mealType") || "snack",
+    date: formData.get("date") || undefined,
+    notes: formData.get("notes") || undefined,
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
+  }
+
+  const existing = await prisma.foodEntry.findFirst({
+    where: { id: parsed.data.id, userId: session.user.id },
+  });
+  if (!existing) {
+    return { error: "Entrée introuvable" };
+  }
+
+  if (
+    imageUrlRaw &&
+    (!isVercelBlobUrl(imageUrlRaw) || !mealBlobBelongsToUser(imageUrlRaw, session.user.id))
+  ) {
+    return { error: "URL photo invalide" };
+  }
+
+  const macros = parseFoodMacros(formData);
+  if ("error" in macros) {
+    return { error: macros.error };
+  }
+
+  const date = parsed.data.date
+    ? startOfUtcDay(new Date(`${parsed.data.date}T00:00:00.000Z`))
+    : existing.date;
+
+  let nextImageUrl: string | null = existing.imageUrl;
+  if (clearImage) {
+    nextImageUrl = null;
+  } else if (imageUrlRaw) {
+    nextImageUrl = imageUrlRaw;
+  }
+
+  if (
+    existing.imageUrl &&
+    existing.imageUrl !== nextImageUrl &&
+    process.env.BLOB_READ_WRITE_TOKEN
+  ) {
+    try {
+      await del(existing.imageUrl);
+    } catch {
+      // Ignore blob delete failures.
+    }
+  }
+
+  await prisma.foodEntry.update({
+    where: { id: existing.id },
+    data: {
+      date,
+      mealType: parsed.data.mealType,
+      name: parsed.data.name,
+      notes: parsed.data.notes || null,
+      imageUrl: nextImageUrl,
+      calories: macros.calories,
+      proteinG: macros.proteinG,
+      carbsG: macros.carbsG,
+      fatG: macros.fatG,
+    },
+  });
+
+  revalidateApp();
+  return { success: true };
+}
+
+export async function copyFoodDay(formData: FormData) {
+  const session = await requireWhitelistedSession();
+  const parsed = copyFoodDaySchema.safeParse({
+    sourceDate: formData.get("sourceDate"),
+    targetDate: formData.get("targetDate"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Dates invalides" };
+  }
+
+  if (parsed.data.sourceDate === parsed.data.targetDate) {
+    return { error: "Source et cible identiques" };
+  }
+
+  const source = startOfUtcDay(new Date(`${parsed.data.sourceDate}T00:00:00.000Z`));
+  const target = startOfUtcDay(new Date(`${parsed.data.targetDate}T00:00:00.000Z`));
+
+  const entries = await prisma.foodEntry.findMany({
+    where: { userId: session.user.id, date: source },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (entries.length === 0) {
+    return { error: "Rien à copier ce jour-là" };
+  }
+
+  await prisma.foodEntry.createMany({
+    data: entries.map((entry) => ({
+      userId: session.user.id,
+      date: target,
+      mealType: entry.mealType,
+      name: entry.name,
+      notes: entry.notes,
+      imageUrl: null,
+      calories: entry.calories,
+      proteinG: entry.proteinG,
+      carbsG: entry.carbsG,
+      fatG: entry.fatG,
+    })),
+  });
+
+  revalidateApp();
+  return { success: true, count: entries.length };
+}
+
+export async function listFoodFavorites(userId: string) {
+  return prisma.foodFavorite.findMany({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+export async function addFavoriteFromEntry(entryId: string) {
+  const session = await requireWhitelistedSession();
+  const entry = await prisma.foodEntry.findFirst({
+    where: { id: entryId, userId: session.user.id },
+  });
+  if (!entry) {
+    return { error: "Entrée introuvable" };
+  }
+
+  await prisma.foodFavorite.upsert({
+    where: {
+      userId_name: {
+        userId: session.user.id,
+        name: entry.name,
+      },
+    },
+    create: {
+      userId: session.user.id,
+      name: entry.name,
+      mealType: entry.mealType,
+      notes: entry.notes,
+      calories: entry.calories,
+      proteinG: entry.proteinG,
+      carbsG: entry.carbsG,
+      fatG: entry.fatG,
+    },
+    update: {
+      mealType: entry.mealType,
+      notes: entry.notes,
+      calories: entry.calories,
+      proteinG: entry.proteinG,
+      carbsG: entry.carbsG,
+      fatG: entry.fatG,
+    },
+  });
+
+  revalidateApp();
+  return { success: true };
+}
+
+export async function removeFavorite(favoriteId: string) {
+  const session = await requireWhitelistedSession();
+  const favorite = await prisma.foodFavorite.findFirst({
+    where: { id: favoriteId, userId: session.user.id },
+  });
+  if (!favorite) {
+    return { error: "Favori introuvable" };
+  }
+  await prisma.foodFavorite.delete({ where: { id: favorite.id } });
+  revalidateApp();
+  return { success: true };
+}
+
+export async function createFoodFromFavorite(formData: FormData) {
+  const session = await requireWhitelistedSession();
+  const favoriteId = String(formData.get("favoriteId") || "");
+  const dateRaw = String(formData.get("date") || "").trim();
+
+  const favorite = await prisma.foodFavorite.findFirst({
+    where: { id: favoriteId, userId: session.user.id },
+  });
+  if (!favorite) {
+    return { error: "Favori introuvable" };
+  }
+
+  const date =
+    dateRaw && /^\d{4}-\d{2}-\d{2}$/.test(dateRaw)
+      ? startOfUtcDay(new Date(`${dateRaw}T00:00:00.000Z`))
+      : startOfUtcDay();
+
+  await prisma.foodEntry.create({
+    data: {
+      userId: session.user.id,
+      date,
+      mealType: favorite.mealType ?? "snack",
+      name: favorite.name,
+      notes: favorite.notes,
+      imageUrl: null,
+      calories: favorite.calories,
+      proteinG: favorite.proteinG,
+      carbsG: favorite.carbsG,
+      fatG: favorite.fatG,
     },
   });
 

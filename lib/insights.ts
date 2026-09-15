@@ -2,6 +2,7 @@
 
 import { startOfUtcDay, toDateKey } from "@/lib/date";
 import { getFoodWeek } from "@/lib/food/actions";
+import { getHabitsWeekRate } from "@/lib/habits/actions";
 import { prisma } from "@/lib/prisma";
 
 export async function getWeeklyInsights(userId: string) {
@@ -9,7 +10,7 @@ export async function getWeeklyInsights(userId: string) {
   const weekAgo = new Date(today);
   weekAgo.setUTCDate(weekAgo.getUTCDate() - 7);
 
-  const [weights, foodWeek, goal] = await Promise.all([
+  const [weights, foodWeek, goal, habitsWeek] = await Promise.all([
     prisma.weightEntry.findMany({
       where: {
         userId,
@@ -19,6 +20,7 @@ export async function getWeeklyInsights(userId: string) {
     }),
     getFoodWeek(userId),
     prisma.weightGoal.findUnique({ where: { userId } }),
+    getHabitsWeekRate(userId),
   ]);
 
   let weightChange: number | null = null;
@@ -65,10 +67,20 @@ export async function getWeeklyInsights(userId: string) {
     );
   }
 
+  if (habitsWeek.ratePct != null) {
+    lines.push(`Leviers semaine : ${habitsWeek.ratePct}% (${habitsWeek.done}/${habitsWeek.total})`);
+    if (habitsWeek.ratePct < 50 && weightChange != null && weightChange > -0.2) {
+      lines.push("Leviers faibles + poids stagnant : priorise 2–3 checks cette semaine");
+    } else if (habitsWeek.ratePct >= 70) {
+      lines.push("Leviers bien tenus : garde le rythme");
+    }
+  }
+
   return {
     weightChange,
     avgProtein: foodWeek.avgProtein,
     avgCalories: foodWeek.avgCalories,
+    habitsRatePct: habitsWeek.ratePct,
     lines,
     from: toDateKey(weekAgo),
     to: toDateKey(today),

@@ -1,8 +1,21 @@
 import Link from "next/link";
-import { createFoodEntry, deleteFoodEntry, getFoodDay, getFoodWeek } from "@/lib/food/actions";
+import {
+  addFavoriteFromEntry,
+  copyFoodDay,
+  createFoodEntry,
+  createFoodFromFavorite,
+  deleteFoodEntry,
+  getFoodDay,
+  getFoodWeek,
+  listFoodFavorites,
+  removeFavorite,
+  updateFoodEntry,
+} from "@/lib/food/actions";
+import { estimateFoodMacrosFromImage } from "@/lib/ai/food-macros";
 import { shiftDateKey, startOfUtcDay, toDateKey } from "@/lib/date";
 import { requireWhitelistedSession } from "@/lib/session";
 import { FoodDayList } from "@/components/food/food-day-list";
+import { FoodQuickActions } from "@/components/food/food-quick-actions";
 import { FoodWeekStrip } from "@/components/food/food-week-strip";
 import { LogFoodForm } from "@/components/food/log-food-form";
 import { Button } from "@/components/ui/button";
@@ -25,9 +38,10 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
   const today = toDateKey(startOfUtcDay());
   const selectedDate = params.date && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : today;
 
-  const [food, week] = await Promise.all([
+  const [food, week, favorites] = await Promise.all([
     getFoodDay(session.user.id, selectedDate),
     getFoodWeek(session.user.id, selectedDate),
+    listFoodFavorites(session.user.id),
   ]);
 
   const photosEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
@@ -46,15 +60,15 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="h-11 md:h-8">
             <Link href={`/food?date=${prev}`}>Hier</Link>
           </Button>
           {!isToday ? (
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="h-11 md:h-8">
               <Link href="/food">Aujourd&apos;hui</Link>
             </Button>
           ) : null}
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="h-11 md:h-8">
             <Link href={`/food?date=${next}`}>Lendemain</Link>
           </Button>
         </div>
@@ -62,20 +76,36 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
 
       <FoodWeekStrip days={week.days} selectedDate={selectedDate} />
 
-      <LogFoodForm
-        action={createFoodEntry}
-        today={selectedDate}
-        defaultMealType={defaultMealTypeForNow()}
-        photosEnabled={photosEnabled}
-      />
-
-      <FoodDayList
-        byMeal={food.byMeal}
-        totals={food.totals}
-        goal={food.goal}
-        progress={food.progress}
-        deleteAction={deleteFoodEntry}
-      />
+      <div className="grid gap-6 md:grid-cols-2 md:items-start">
+        <div className="space-y-6">
+          <FoodQuickActions
+            selectedDate={selectedDate}
+            favorites={favorites}
+            copyAction={copyFoodDay}
+            createFromFavoriteAction={createFoodFromFavorite}
+            removeFavoriteAction={removeFavorite}
+          />
+          <LogFoodForm
+            action={createFoodEntry}
+            today={selectedDate}
+            defaultMealType={defaultMealTypeForNow()}
+            photosEnabled={photosEnabled}
+            estimateMacrosAction={estimateFoodMacrosFromImage}
+          />
+        </div>
+        <FoodDayList
+          byMeal={food.byMeal}
+          totals={food.totals}
+          goal={food.goal}
+          progress={food.progress}
+          selectedDate={selectedDate}
+          photosEnabled={photosEnabled}
+          deleteAction={deleteFoodEntry}
+          updateAction={updateFoodEntry}
+          favoriteAction={addFavoriteFromEntry}
+          estimateMacrosAction={estimateFoodMacrosFromImage}
+        />
+      </div>
     </>
   );
 }

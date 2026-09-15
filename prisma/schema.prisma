@@ -20,6 +20,7 @@ model User {
   weightGoal     WeightGoal?
   weightEntries  WeightEntry[]
   foodEntries    FoodEntry[]
+  foodFavorites  FoodFavorite[]
   nutritionGoal  NutritionGoal?
 
   @@unique([email])
@@ -165,4 +166,23 @@ model NutritionGoal {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("nutrition_goal")
+}
+
+model FoodFavorite {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  mealType  MealType?
+  notes     String?
+  calories  Int?
+  proteinG  Float?
+  carbsG    Float?
+  fatG      Float?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("food_favorite")
 }

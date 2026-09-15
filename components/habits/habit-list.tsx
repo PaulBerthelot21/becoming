@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,10 @@ type HabitItem = {
 
 type HabitListProps = {
   habits: HabitItem[];
-  toggleAction: (habitId: string) => Promise<{ error?: string; success?: boolean }>;
+  toggleAction: (
+    habitId: string,
+    dateKey?: string,
+  ) => Promise<{ error?: string; success?: boolean }>;
   deleteAction?: (habitId: string) => Promise<{ error?: string; success?: boolean }>;
   mode?: "checkin" | "manage";
 };
@@ -38,6 +42,7 @@ function lastSevenDays() {
 
 export function HabitList({ habits, toggleAction, deleteAction, mode = "manage" }: HabitListProps) {
   const [pending, startTransition] = useTransition();
+  const reduceMotion = useReducedMotion();
   const week = lastSevenDays();
 
   if (habits.length === 0) {
@@ -57,9 +62,12 @@ export function HabitList({ habits, toggleAction, deleteAction, mode = "manage" 
 
   return (
     <ul className="space-y-3">
-      {habits.map((habit) => (
-        <li
+      {habits.map((habit, index) => (
+        <motion.li
           key={habit.id}
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: reduceMotion ? 0 : index * 0.04, duration: 0.25 }}
           className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
         >
           <div className="flex items-start justify-between gap-3">
@@ -77,6 +85,7 @@ export function HabitList({ habits, toggleAction, deleteAction, mode = "manage" 
                 <Button
                   type="button"
                   size="sm"
+                  className="h-11 min-w-[4.5rem] md:h-8"
                   disabled={pending}
                   variant={habit.completedToday ? "default" : "outline"}
                   onClick={() =>
@@ -105,7 +114,7 @@ export function HabitList({ habits, toggleAction, deleteAction, mode = "manage" 
                       size="sm"
                       variant="ghost"
                       disabled={pending}
-                      className="text-destructive hover:text-destructive"
+                      className="h-11 text-destructive hover:text-destructive md:h-8"
                       onClick={() =>
                         startTransition(async () => {
                           const result = await deleteAction(habit.id);
@@ -128,15 +137,31 @@ export function HabitList({ habits, toggleAction, deleteAction, mode = "manage" 
             {week.map((day) => {
               const done = habit.weekCompletions.includes(day);
               return (
-                <span
+                <button
                   key={day}
-                  title={day}
-                  className={`h-2.5 flex-1 rounded-full ${done ? "bg-primary" : "bg-muted"}`}
+                  type="button"
+                  title={`${day}${done ? " — fait" : ""}`}
+                  disabled={pending}
+                  className={`h-4 min-h-4 flex-1 rounded-full transition md:h-2.5 ${
+                    done ? "bg-primary" : "bg-muted hover:bg-muted-foreground/30"
+                  }`}
+                  onClick={() =>
+                    startTransition(async () => {
+                      const result = await toggleAction(habit.id, day);
+                      if (result.error) {
+                        toast.error(result.error);
+                        return;
+                      }
+                      toast.success(
+                        done ? `${habit.name} retiré (${day})` : `${habit.name} (${day})`,
+                      );
+                    })
+                  }
                 />
               );
             })}
           </div>
-        </li>
+        </motion.li>
       ))}
     </ul>
   );

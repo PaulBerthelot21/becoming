@@ -19,6 +19,15 @@ export const createFoodEntrySchema = z.object({
   notes: z.string().trim().max(280).optional(),
 });
 
+export const updateFoodEntrySchema = createFoodEntrySchema.extend({
+  id: z.string().min(1),
+});
+
+export const copyFoodDaySchema = z.object({
+  sourceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+
 export const upsertNutritionGoalSchema = z.object({
   calorieTarget: z.coerce.number().int().min(800).max(6000),
   proteinTargetG: z.coerce.number().min(20).max(400),
