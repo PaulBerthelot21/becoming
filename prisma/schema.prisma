@@ -17,9 +17,10 @@ model User {
   sessions      Session[]
   accounts      Account[]
   habits        Habit[]
-  weightGoal    WeightGoal?
-  weightEntries WeightEntry[]
-  foodEntries   FoodEntry[]
+  weightGoal     WeightGoal?
+  weightEntries  WeightEntry[]
+  foodEntries    FoodEntry[]
+  nutritionGoal  NutritionGoal?
 
   @@unique([email])
   @@map("user")
@@ -135,20 +136,33 @@ enum MealType {
 }
 
 model FoodEntry {
-  id          String   @id @default(cuid())
-  userId      String
-  date        DateTime @db.Date
-  mealType    MealType @default(snack)
-  name        String
-  notes       String?
-  calories    Int?
-  proteinG    Float?
-  carbsG      Float?
-  fatG        Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @db.Date
+  mealType  MealType @default(snack)
+  name      String
+  notes     String?
+  imageUrl  String?
+  calories  Int?
+  proteinG  Float?
+  carbsG    Float?
+  fatG      Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, date])
   @@map("food_entry")
+}
+
+model NutritionGoal {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  calorieTarget   Int
+  proteinTargetG  Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("nutrition_goal")
 }

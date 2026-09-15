@@ -11,6 +11,7 @@ type FoodItem = {
   id: string;
   name: string;
   notes: string | null;
+  imageUrl: string | null;
   calories: number | null;
   proteinG: number | null;
   carbsG: number | null;
@@ -27,6 +28,14 @@ type FoodDayListProps = {
     count: number;
     hasAnyMacros: boolean;
   };
+  goal?: {
+    calorieTarget: number;
+    proteinTargetG: number;
+  } | null;
+  progress?: {
+    caloriesPct: number;
+    proteinPct: number;
+  } | null;
   deleteAction: (entryId: string) => Promise<{ error?: string; success?: boolean }>;
 };
 
@@ -39,7 +48,38 @@ function macroLine(item: FoodItem) {
   return parts.join(" · ");
 }
 
-export function FoodDayList({ byMeal, totals, deleteAction }: FoodDayListProps) {
+function ProgressBar({
+  label,
+  value,
+  target,
+  pct,
+}: {
+  label: string;
+  value: number;
+  target: number;
+  pct: number;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <span>{label}</span>
+        <span className="text-muted-foreground">
+          {value}
+          <span className="mx-1">/</span>
+          {target}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div
+          className="h-full rounded-full bg-primary transition-all"
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function FoodDayList({ byMeal, totals, goal, progress, deleteAction }: FoodDayListProps) {
   const [pending, startTransition] = useTransition();
 
   return (
@@ -53,22 +93,37 @@ export function FoodDayList({ byMeal, totals, deleteAction }: FoodDayListProps) 
               : `${totals.count} entrée${totals.count > 1 ? "s" : ""}`}
           </CardDescription>
         </CardHeader>
-        {totals.count > 0 ? (
-          <CardContent className="flex flex-wrap gap-2">
-            {totals.hasAnyMacros ? (
-              <>
+        <CardContent className="space-y-4">
+          {goal && progress ? (
+            <div className="space-y-3">
+              <ProgressBar
+                label="Calories"
+                value={totals.calories}
+                target={goal.calorieTarget}
+                pct={progress.caloriesPct}
+              />
+              <ProgressBar
+                label="Protéines (g)"
+                value={totals.proteinG}
+                target={goal.proteinTargetG}
+                pct={progress.proteinPct}
+              />
+            </div>
+          ) : totals.count > 0 ? (
+            totals.hasAnyMacros ? (
+              <div className="flex flex-wrap gap-2">
                 <Badge variant="secondary">{totals.calories} kcal</Badge>
                 <Badge variant="outline">P {totals.proteinG}g</Badge>
                 <Badge variant="outline">G {totals.carbsG}g</Badge>
                 <Badge variant="outline">L {totals.fatG}g</Badge>
-              </>
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Pas de macros renseignées — le suivi textuel compte déjà.
+                Pas de macros renseignées — définis une cible alim pour des barres utiles.
               </p>
-            )}
-          </CardContent>
-        ) : null}
+            )
+          ) : null}
+        </CardContent>
       </Card>
 
       {mealTypes.map((mealType) => {
@@ -87,14 +142,24 @@ export function FoodDayList({ byMeal, totals, deleteAction }: FoodDayListProps) 
                     key={item.id}
                     className="flex items-start justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0"
                   >
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      {item.notes ? (
-                        <p className="text-sm text-muted-foreground">{item.notes}</p>
+                    <div className="flex gap-3">
+                      {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          className="size-14 rounded-md object-cover"
+                        />
                       ) : null}
-                      {macroLine(item) ? (
-                        <p className="mt-1 text-xs text-muted-foreground">{macroLine(item)}</p>
-                      ) : null}
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        {item.notes ? (
+                          <p className="text-sm text-muted-foreground">{item.notes}</p>
+                        ) : null}
+                        {macroLine(item) ? (
+                          <p className="mt-1 text-xs text-muted-foreground">{macroLine(item)}</p>
+                        ) : null}
+                      </div>
                     </div>
                     <Button
                       type="button"

@@ -1,25 +1,32 @@
 import { requireWhitelistedSession } from "@/lib/session";
 import { getWeightDashboard, upsertWeightGoal } from "@/lib/weight/actions";
+import { getNutritionGoal, upsertNutritionGoal } from "@/lib/food/actions";
 import { WeightGoalForm } from "@/components/weight/weight-goal-form";
+import { NutritionGoalForm } from "@/components/food/nutrition-goal-form";
 
 export default async function GoalPage() {
   const session = await requireWhitelistedSession();
-  const weight = await getWeightDashboard(session.user.id);
+  const [weight, nutrition] = await Promise.all([
+    getWeightDashboard(session.user.id),
+    getNutritionGoal(session.user.id),
+  ]);
 
   return (
     <>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Objectif</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Poids de départ, cible et rythme hebdo. À ajuster rarement.
+        <p className="mt-1 text-sm text-muted-foreground">
+          Cut (poids) + cibles alimentaires. À ajuster rarement.
         </p>
       </div>
 
       <WeightGoalForm action={upsertWeightGoal} defaults={weight.goal} />
 
+      <NutritionGoalForm action={upsertNutritionGoal} defaults={nutrition} />
+
       {weight.goal ? (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Cible actuelle : {weight.goal.targetWeightKg.toFixed(1)} kg à −
+        <p className="text-sm text-muted-foreground">
+          Cible poids : {weight.goal.targetWeightKg.toFixed(1)} kg à −
           {weight.goal.weeklyRateKg.toFixed(1)} kg/semaine.
         </p>
       ) : null}

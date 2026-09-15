@@ -6,6 +6,12 @@ export function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
+export function shiftDateKey(dateKey: string, days: number) {
+  const date = startOfUtcDay(new Date(`${dateKey}T00:00:00.000Z`));
+  date.setUTCDate(date.getUTCDate() + days);
+  return toDateKey(date);
+}
+
 /** Simple moving average over the last `window` points ending at each index. */
 export function movingAverage(values: Array<number | null>, window: number): Array<number | null> {
   return values.map((_, index) => {

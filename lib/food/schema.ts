@@ -19,6 +19,11 @@ export const createFoodEntrySchema = z.object({
   notes: z.string().trim().max(280).optional(),
 });
 
+export const upsertNutritionGoalSchema = z.object({
+  calorieTarget: z.coerce.number().int().min(800).max(6000),
+  proteinTargetG: z.coerce.number().min(20).max(400),
+});
+
 function optionalFinite(value: FormDataEntryValue | null, max: number) {
   if (value == null || value === "") return null;
   const n = Number(value);

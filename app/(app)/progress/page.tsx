@@ -6,15 +6,18 @@ import {
   getWeightHistory,
   updateWeightEntry,
 } from "@/lib/weight/actions";
+import { getWeeklyInsights } from "@/lib/insights";
 import { WeightChart } from "@/components/weight/weight-chart";
 import { WeightHistory } from "@/components/weight/weight-history";
 import { WeightSummary } from "@/components/weight/weight-summary";
+import { WeeklyInsightsCard } from "@/components/weekly-insights-card";
 
 export default async function ProgressPage() {
   const session = await requireWhitelistedSession();
-  const [weight, history] = await Promise.all([
+  const [weight, history, insights] = await Promise.all([
     getWeightDashboard(session.user.id),
     getWeightHistory(session.user.id),
+    getWeeklyInsights(session.user.id),
   ]);
 
   return (
@@ -22,9 +25,11 @@ export default async function ProgressPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Progression</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Courbe, tendance et historique éditable.
+          Courbe, insights semaine et historique éditable.
         </p>
       </div>
+
+      <WeeklyInsightsCard lines={insights.lines} from={insights.from} to={insights.to} />
 
       {!weight.goal ? (
         <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
