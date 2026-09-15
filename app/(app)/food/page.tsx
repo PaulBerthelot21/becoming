@@ -15,10 +15,11 @@ import { estimateFoodMacrosFromImage } from "@/lib/ai/food-macros";
 import { shiftDateKey, startOfUtcDay, toDateKey } from "@/lib/date";
 import { requireWhitelistedSession } from "@/lib/session";
 import { FoodDayList } from "@/components/food/food-day-list";
+import { FoodDaySummary } from "@/components/food/food-day-summary";
+import { FoodPageHeader } from "@/components/food/food-page-header";
 import { FoodQuickActions } from "@/components/food/food-quick-actions";
 import { FoodWeekStrip } from "@/components/food/food-week-strip";
 import { LogFoodForm } from "@/components/food/log-food-form";
-import { Button } from "@/components/ui/button";
 
 function defaultMealTypeForNow(): "breakfast" | "lunch" | "dinner" | "snack" {
   const hour = new Date().getHours();
@@ -47,37 +48,17 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
   const photosEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
   const prev = shiftDateKey(selectedDate, -1);
   const next = shiftDateKey(selectedDate, 1);
-  const isToday = selectedDate === today;
 
   return (
-    <>
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Alimentation</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Jour sélectionné : {selectedDate}
-            {isToday ? " (aujourd'hui)" : ""}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild variant="outline" size="sm" className="h-11 md:h-8">
-            <Link href={`/food?date=${prev}`}>Hier</Link>
-          </Button>
-          {!isToday ? (
-            <Button asChild variant="outline" size="sm" className="h-11 md:h-8">
-              <Link href="/food">Aujourd&apos;hui</Link>
-            </Button>
-          ) : null}
-          <Button asChild variant="outline" size="sm" className="h-11 md:h-8">
-            <Link href={`/food?date=${next}`}>Lendemain</Link>
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-6 md:space-y-8">
+      <FoodPageHeader selectedDate={selectedDate} today={today} prev={prev} next={next} />
 
       <FoodWeekStrip days={week.days} selectedDate={selectedDate} />
 
-      <div className="grid gap-6 md:grid-cols-2 md:items-start">
-        <div className="space-y-6">
+      <FoodDaySummary totals={food.totals} goal={food.goal} progress={food.progress} />
+
+      <div className="grid gap-8 md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] md:items-start md:gap-10">
+        <div className="space-y-5 md:sticky md:top-20">
           <FoodQuickActions
             selectedDate={selectedDate}
             favorites={favorites}
@@ -92,12 +73,19 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
             photosEnabled={photosEnabled}
             estimateMacrosAction={estimateFoodMacrosFromImage}
           />
+          {!food.goal ? (
+            <p className="text-center text-xs text-muted-foreground md:text-left">
+              Pour des barres kcal/protéines,{" "}
+              <Link href="/goal" className="underline underline-offset-2">
+                définis une cible alim
+              </Link>
+              .
+            </p>
+          ) : null}
         </div>
+
         <FoodDayList
           byMeal={food.byMeal}
-          totals={food.totals}
-          goal={food.goal}
-          progress={food.progress}
           selectedDate={selectedDate}
           photosEnabled={photosEnabled}
           deleteAction={deleteFoodEntry}
@@ -106,6 +94,6 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
           estimateMacrosAction={estimateFoodMacrosFromImage}
         />
       </div>
-    </>
+    </div>
   );
 }

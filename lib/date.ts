@@ -12,6 +12,19 @@ export function shiftDateKey(dateKey: string, days: number) {
   return toDateKey(date);
 }
 
+/** French long date from YYYY-MM-DD (UTC day). */
+export function formatDateFr(dateKey: string, options?: Intl.DateTimeFormatOptions) {
+  return new Date(`${dateKey}T12:00:00.000Z`).toLocaleDateString("fr-FR", {
+    timeZone: "UTC",
+    ...options,
+  });
+}
+
+/** Weekday short FR, e.g. lun. */
+export function weekdayShortFr(dateKey: string) {
+  return formatDateFr(dateKey, { weekday: "short" }).replace(/\.$/, "");
+}
+
 /** Simple moving average over the last `window` points ending at each index. */
 export function movingAverage(values: Array<number | null>, window: number): Array<number | null> {
   return values.map((_, index) => {

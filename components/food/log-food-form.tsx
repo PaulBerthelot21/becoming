@@ -3,7 +3,6 @@
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { mealImageSrc } from "@/lib/blob";
@@ -316,7 +315,11 @@ function LogFoodFormInner({
         />
       </div>
 
-      <Button type="submit" disabled={pending || uploading} className="h-11 min-w-28 md:h-9">
+      <Button
+        type="submit"
+        disabled={pending || uploading}
+        className="h-11 w-full rounded-xl md:h-10 md:w-auto md:min-w-32"
+      >
         {uploading
           ? "Upload…"
           : pending
@@ -333,16 +336,21 @@ function LogFoodFormInner({
   if (embedded) return form;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{mode === "edit" ? "Modifier le repas" : "Noter un repas"}</CardTitle>
-        <CardDescription>
+    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-xs">
+      <div className="border-b border-border/60 bg-gradient-to-r from-primary/8 via-transparent to-accent/30 px-4 py-4 md:px-5">
+        <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+          Composer
+        </p>
+        <h2 className="mt-1 text-lg font-semibold tracking-tight">
+          {mode === "edit" ? "Modifier le repas" : "Noter un repas"}
+        </h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Texte + macros optionnelles
           {photosEnabled ? " + photo" : ""}.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>{form}</CardContent>
-    </Card>
+        </p>
+      </div>
+      <div className="p-4 md:p-5">{form}</div>
+    </div>
   );
 }
 
