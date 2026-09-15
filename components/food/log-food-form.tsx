@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -103,11 +102,14 @@ export function LogFoodForm({
 
                   setUploading(true);
                   try {
-                    const blob = await upload(`meals/${Date.now()}-${file.name}`, file, {
-                      access: "public",
-                      handleUploadUrl: "/api/blob/upload",
-                    });
-                    setImageUrl(blob.url);
+                    const body = new FormData();
+                    body.set("file", file);
+                    const res = await fetch("/api/blob/upload", { method: "POST", body });
+                    const data = (await res.json()) as { url?: string; error?: string };
+                    if (!res.ok || !data.url) {
+                      throw new Error(data.error || "Upload photo impossible");
+                    }
+                    setImageUrl(data.url);
                     setPreview(URL.createObjectURL(file));
                     toast.success("Photo prête");
                   } catch (error) {

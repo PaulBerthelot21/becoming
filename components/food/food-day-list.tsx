@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { mealImageSrc } from "@/lib/blob";
 import { mealTypeLabels, mealTypes } from "@/lib/food/schema";
 
 type FoodItem = {
@@ -146,7 +147,7 @@ export function FoodDayList({ byMeal, totals, goal, progress, deleteAction }: Fo
                       {item.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={item.imageUrl}
+                          src={mealImageSrc(item.imageUrl)}
                           alt=""
                           className="size-14 rounded-md object-cover"
                         />

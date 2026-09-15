@@ -1,6 +1,7 @@
 "use server";
 
 import { del } from "@vercel/blob";
+import { isVercelBlobUrl, mealBlobBelongsToUser } from "@/lib/blob";
 import { startOfUtcDay, toDateKey } from "@/lib/date";
 import {
   createFoodEntrySchema,
@@ -156,7 +157,7 @@ export async function createFoodEntry(formData: FormData) {
     return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   }
 
-  if (imageUrlRaw && !/^https:\/\/.+\.blob\.vercel-storage\.com\//.test(imageUrlRaw)) {
+  if (imageUrlRaw && (!isVercelBlobUrl(imageUrlRaw) || !mealBlobBelongsToUser(imageUrlRaw, session.user.id))) {
     return { error: "URL photo invalide" };
   }
 
