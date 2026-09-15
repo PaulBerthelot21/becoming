@@ -4,8 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "motion/react";
 import { Goal, Home, ListChecks, Plus, UtensilsCrossed } from "lucide-react";
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { useAddMeal } from "@/components/food/add-meal-provider";
 import { cn } from "@/lib/utils";
 
@@ -28,10 +27,18 @@ function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function AppNav() {
+type AppNavProps = {
+  user: {
+    name: string;
+    image?: string | null;
+  };
+};
+
+export function AppNav({ user }: AppNavProps) {
   const pathname = usePathname();
   const { available, setOpen } = useAddMeal();
   const reduceMotion = useReducedMotion();
+  const profileActive = pathname.startsWith("/profile");
 
   const left = mobileLinks.slice(0, 2);
   const right = mobileLinks.slice(2);
@@ -64,10 +71,19 @@ export function AppNav() {
             </nav>
           </div>
 
-          <div className="flex items-center gap-1">
-            <ThemeToggle />
-            <SignOutButton />
-          </div>
+          <Link
+            href="/profile"
+            aria-label="Profil"
+            aria-current={profileActive ? "page" : undefined}
+            className={cn(
+              "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full transition md:h-8 md:w-8",
+              profileActive
+                ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                : "hover:opacity-90",
+            )}
+          >
+            <ProfileAvatar name={user.name} image={user.image} />
+          </Link>
         </div>
       </header>
 
