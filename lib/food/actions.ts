@@ -157,7 +157,10 @@ export async function createFoodEntry(formData: FormData) {
     return { error: parsed.error.issues[0]?.message ?? "Données invalides" };
   }
 
-  if (imageUrlRaw && (!isVercelBlobUrl(imageUrlRaw) || !mealBlobBelongsToUser(imageUrlRaw, session.user.id))) {
+  if (
+    imageUrlRaw &&
+    (!isVercelBlobUrl(imageUrlRaw) || !mealBlobBelongsToUser(imageUrlRaw, session.user.id))
+  ) {
     return { error: "URL photo invalide" };
   }
 

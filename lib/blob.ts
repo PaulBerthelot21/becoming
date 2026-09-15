@@ -4,8 +4,7 @@ export function isVercelBlobUrl(url: string): boolean {
     const { hostname, protocol } = new URL(url);
     return (
       protocol === "https:" &&
-      (hostname.endsWith(".blob.vercel-storage.com") ||
-        hostname === "blob.vercel-storage.com")
+      (hostname.endsWith(".blob.vercel-storage.com") || hostname === "blob.vercel-storage.com")
     );
   } catch {
     return false;
