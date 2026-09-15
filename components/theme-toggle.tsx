@@ -1,24 +1,38 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
+function subscribe() {
+  return () => {};
+}
+
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
+
+  if (!mounted) {
+    return (
+      <Button type="button" variant="ghost" size="icon" className="size-9" aria-hidden disabled>
+        <Sun className="size-4 opacity-0" />
+      </Button>
+    );
+  }
+
   const isDark = resolvedTheme === "dark";
 
   return (
     <Button
       type="button"
       variant="ghost"
-      size="icon-sm"
-      className="relative h-11 w-11 md:h-8 md:w-8"
-      aria-label={isDark ? "Passer en thème clair" : "Passer en thème sombre"}
+      size="icon"
+      className="size-9"
+      aria-label={isDark ? "Passer en clair" : "Passer en sombre"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      <Sun className="size-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-      <Moon className="absolute size-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+      {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </Button>
   );
 }

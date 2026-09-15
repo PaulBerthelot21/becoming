@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { getHabitStreak, getHabitsForUser, toggleHabitCompletion } from "@/lib/habits/actions";
 import {
-  createFoodEntry,
   createFoodFromFavorite,
   getFoodDay,
   listFoodFavorites,
 } from "@/lib/food/actions";
 import { getWeeklyInsights } from "@/lib/insights";
 import { getCoachNote } from "@/lib/ai/coach";
-import { estimateFoodMacrosFromImage } from "@/lib/ai/food-macros";
 import { formatDateFr, startOfUtcDay, toDateKey } from "@/lib/date";
 import { requireWhitelistedSession } from "@/lib/session";
 import { getWeightDashboard, logWeight } from "@/lib/weight/actions";
@@ -18,17 +16,8 @@ import { WeightSummary } from "@/components/weight/weight-summary";
 import { TodayRitual } from "@/components/today-ritual";
 import { WeeklyInsightsCard } from "@/components/weekly-insights-card";
 import { ScreenHero } from "@/components/screen-hero";
-import { RegisterAddMeal } from "@/components/food/add-meal-provider";
 import { TodayFoodPanel } from "@/components/food/today-food-panel";
 import { Button } from "@/components/ui/button";
-
-function defaultMealTypeForNow(): "breakfast" | "lunch" | "dinner" | "snack" {
-  const hour = new Date().getHours();
-  if (hour < 11) return "breakfast";
-  if (hour < 15) return "lunch";
-  if (hour < 21) return "dinner";
-  return "snack";
-}
 
 export default async function TodayPage() {
   const session = await requireWhitelistedSession();
@@ -53,7 +42,6 @@ export default async function TodayPage() {
   const todayWeight = weight.todayEntry?.weightKg ?? null;
   const leversDone =
     habitsWithStreak.length === 0 ? false : habitsWithStreak.every((habit) => habit.completedToday);
-  const photosEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
   const titleDate = formatDateFr(today, { weekday: "long", day: "numeric", month: "long" });
 
   return (
@@ -190,16 +178,6 @@ export default async function TodayPage() {
           />
         )}
       </section>
-
-      <RegisterAddMeal
-        today={today}
-        photosEnabled={photosEnabled}
-        favorites={favorites}
-        createAction={createFoodEntry}
-        createFromFavoriteAction={createFoodFromFavorite}
-        estimateMacrosAction={estimateFoodMacrosFromImage}
-        defaultMealType={defaultMealTypeForNow()}
-      />
     </div>
   );
 }

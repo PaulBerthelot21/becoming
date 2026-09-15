@@ -11,7 +11,7 @@ export function SignOutButton() {
     <Button
       type="button"
       variant="outline"
-      size="sm"
+      className="h-11 w-full md:h-9 md:w-auto"
       onClick={async () => {
         await authClient.signOut();
         router.push("/login");
