@@ -7,4 +7,5 @@ export function revalidateApp() {
   revalidatePath("/progress");
   revalidatePath("/habits");
   revalidatePath("/goal");
+  revalidatePath("/food");
 }

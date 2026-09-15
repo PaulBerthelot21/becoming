@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, Goal, Home, ListChecks } from "lucide-react";
+import { Activity, Goal, Home, ListChecks, UtensilsCrossed } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/", label: "Aujourd'hui", icon: Home },
-  { href: "/progress", label: "Progression", icon: Activity },
-  { href: "/habits", label: "Leviers", icon: ListChecks },
-  { href: "/goal", label: "Objectif", icon: Goal },
+  { href: "/", label: "Aujourd'hui", short: "Jour", icon: Home },
+  { href: "/food", label: "Alim.", short: "Alim.", icon: UtensilsCrossed },
+  { href: "/progress", label: "Progression", short: "Prog.", icon: Activity },
+  { href: "/habits", label: "Leviers", short: "Leviers", icon: ListChecks },
+  { href: "/goal", label: "Objectif", short: "Obj.", icon: Goal },
 ] as const;
 
 function isActive(pathname: string, href: string) {
@@ -41,7 +42,7 @@ export function AppNav() {
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     )}
                   >
-                    {link.label}
+                    {link.href === "/food" ? "Alimentation" : link.label}
                   </Link>
                 );
               })}
@@ -55,7 +56,7 @@ export function AppNav() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border/80 bg-background/95 backdrop-blur md:hidden"
         aria-label="Navigation mobile"
       >
-        <ul className="mx-auto grid max-w-2xl grid-cols-4 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+        <ul className="mx-auto grid max-w-2xl grid-cols-5 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
           {links.map((link) => {
             const active = isActive(pathname, link.href);
             const Icon = link.icon;
@@ -65,12 +66,12 @@ export function AppNav() {
                 <Link
                   href={link.href}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-md px-2 py-2 text-[11px] transition",
+                    "flex flex-col items-center gap-1 rounded-md px-1 py-2 text-[10px] transition",
                     active ? "text-primary" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <Icon className="size-5" strokeWidth={active ? 2.25 : 1.75} />
-                  <span className="leading-none">{link.label}</span>
+                  <span className="leading-none">{link.short}</span>
                 </Link>
               </li>
             );

@@ -66,6 +66,7 @@ npx prisma migrate deploy
 ### Navigation
 
 - `/` — Aujourd’hui (pesée + check-in leviers)
+- `/food` — Suivi alimentaire (repas + macros optionnelles)
 - `/progress` — Courbe, tendance et historique éditable
 - `/habits` — Templates cut + gestion des leviers
 - `/goal` — Objectif cut
