@@ -18,9 +18,7 @@ export default async function ProfilePage() {
     <>
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Profil</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Compte, apparence et déconnexion.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Compte, apparence et déconnexion.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 md:items-start">

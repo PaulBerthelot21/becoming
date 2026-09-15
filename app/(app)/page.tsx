@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { getHabitStreak, getHabitsForUser, toggleHabitCompletion } from "@/lib/habits/actions";
-import {
-  createFoodFromFavorite,
-  getFoodDay,
-  listFoodFavorites,
-} from "@/lib/food/actions";
+import { createFoodFromFavorite, getFoodDay, listFoodFavorites } from "@/lib/food/actions";
 import { getWeeklyInsights } from "@/lib/insights";
 import { getCoachNote } from "@/lib/ai/coach";
 import { formatDateFr, startOfUtcDay, toDateKey } from "@/lib/date";

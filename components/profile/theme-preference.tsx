@@ -19,7 +19,11 @@ function subscribe() {
 
 export function ThemePreference() {
   const { theme, setTheme } = useTheme();
-  const mounted = useSyncExternalStore(subscribe, () => true, () => false);
+  const mounted = useSyncExternalStore(
+    subscribe,
+    () => true,
+    () => false,
+  );
   const current = mounted ? (theme ?? "system") : "system";
 
   return (
