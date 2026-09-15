@@ -13,7 +13,7 @@ type ResponsiveModalProps = {
   className?: string;
 };
 
-/** Bottom sheet on mobile, centered dialog from md. */
+/** Bottom sheet on mobile (sticky chrome), centered dialog from md. */
 export function ResponsiveModal({
   open,
   onClose,
@@ -24,7 +24,7 @@ export function ResponsiveModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center">
       <button
         type="button"
         aria-label="Fermer"
@@ -36,26 +36,30 @@ export function ResponsiveModal({
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "absolute inset-x-0 bottom-0 max-h-[92dvh] overflow-y-auto rounded-t-2xl border border-border bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lg",
-          "md:inset-auto md:top-1/2 md:left-1/2 md:w-full md:max-w-lg md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl md:p-6 md:pb-6",
+          "relative z-10 flex w-full max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl border border-border bg-background shadow-lg",
+          "pb-[env(safe-area-inset-bottom)]",
+          "md:max-h-[min(85dvh,40rem)] md:max-w-lg md:rounded-2xl md:pb-0",
           className,
         )}
       >
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="mx-auto h-1 w-10 rounded-full bg-muted md:hidden" />
-          <h2 className="hidden text-lg font-semibold tracking-tight md:block">{title}</h2>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="ml-auto"
-            onClick={onClose}
-          >
-            <X />
-          </Button>
+        <div className="shrink-0 border-b border-border/60 px-4 pt-3 pb-3 md:px-5 md:pt-4">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted md:hidden" />
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="h-10 w-10 shrink-0 md:h-8 md:w-8"
+              onClick={onClose}
+            >
+              <X />
+            </Button>
+          </div>
         </div>
-        <h2 className="mb-4 text-lg font-semibold tracking-tight md:hidden">{title}</h2>
-        {children}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 md:px-5 md:py-5">
+          {children}
+        </div>
       </div>
     </div>
   );

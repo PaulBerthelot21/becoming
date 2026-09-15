@@ -18,7 +18,7 @@ import { WeightSummary } from "@/components/weight/weight-summary";
 import { TodayRitual } from "@/components/today-ritual";
 import { WeeklyInsightsCard } from "@/components/weekly-insights-card";
 import { ScreenHero } from "@/components/screen-hero";
-import { AddMealFab } from "@/components/food/add-meal-fab";
+import { RegisterAddMeal } from "@/components/food/add-meal-provider";
 import { TodayFoodPanel } from "@/components/food/today-food-panel";
 import { Button } from "@/components/ui/button";
 
@@ -191,7 +191,7 @@ export default async function TodayPage() {
         )}
       </section>
 
-      <AddMealFab
+      <RegisterAddMeal
         today={today}
         photosEnabled={photosEnabled}
         favorites={favorites}

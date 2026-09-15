@@ -40,6 +40,8 @@ type LogFoodFormProps = {
       }
   >;
   embedded?: boolean;
+  /** Denser sheet layout: hidden date, collapsible macros */
+  compact?: boolean;
 };
 
 function LogFoodFormInner({
@@ -52,10 +54,20 @@ function LogFoodFormInner({
   onSuccess,
   estimateMacrosAction,
   embedded = false,
+  compact = false,
 }: LogFoodFormProps) {
   const [pending, startTransition] = useTransition();
   const [estimating, setEstimating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showMacros, setShowMacros] = useState(
+    Boolean(
+      defaults?.calories != null ||
+      defaults?.proteinG != null ||
+      defaults?.carbsG != null ||
+      defaults?.fatG != null ||
+      !compact,
+    ),
+  );
   const [imageUrl, setImageUrl] = useState<string | null>(defaults?.imageUrl ?? null);
   const [preview, setPreview] = useState<string | null>(null);
   const [clearImage, setClearImage] = useState(false);
@@ -71,7 +83,7 @@ function LogFoodFormInner({
   const form = (
     <form
       ref={formRef}
-      className="space-y-4"
+      className={compact ? "space-y-3" : "space-y-4"}
       action={(formData) => {
         startTransition(async () => {
           if (mode === "edit" && defaults?.id) formData.set("id", defaults.id);
@@ -94,7 +106,7 @@ function LogFoodFormInner({
         });
       }}
     >
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor={`name-${mode}`}>Quoi ?</Label>
         <Input
           id={`name-${mode}`}
@@ -104,11 +116,12 @@ function LogFoodFormInner({
           placeholder="Ex. Poulet, riz, brocolis"
           value={macroDefaults.name}
           onChange={(event) => setMacroDefaults((prev) => ({ ...prev, name: event.target.value }))}
+          className="h-11 md:h-9"
         />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-2">
+      <div className={compact ? "grid gap-3" : "grid gap-3 sm:grid-cols-2"}>
+        <div className="space-y-1.5">
           <Label htmlFor={`mealType-${mode}`}>Repas</Label>
           <select
             id={`mealType-${mode}`}
@@ -123,20 +136,24 @@ function LogFoodFormInner({
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor={`date-${mode}`}>Date</Label>
-          <Input
-            id={`date-${mode}`}
-            name="date"
-            type="date"
-            defaultValue={defaults?.date ?? today}
-            className="h-11 md:h-9"
-          />
-        </div>
+        {compact ? (
+          <input type="hidden" name="date" value={defaults?.date ?? today} />
+        ) : (
+          <div className="space-y-1.5">
+            <Label htmlFor={`date-${mode}`}>Date</Label>
+            <Input
+              id={`date-${mode}`}
+              name="date"
+              type="date"
+              defaultValue={defaults?.date ?? today}
+              className="h-11 md:h-9"
+            />
+          </div>
+        )}
       </div>
 
       {photosEnabled ? (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <Label htmlFor={`photo-${mode}`}>Photo (optionnel)</Label>
           <Input
             id={`photo-${mode}`}
@@ -174,7 +191,11 @@ function LogFoodFormInner({
               <img
                 src={preview ?? (imageUrl ? mealImageSrc(imageUrl) : "")}
                 alt="Aperçu repas"
-                className="mt-2 h-28 w-28 rounded-md object-cover"
+                className={
+                  compact
+                    ? "mt-1 size-16 rounded-xl object-cover"
+                    : "mt-2 h-28 w-28 rounded-md object-cover"
+                }
               />
               <div className="flex flex-col gap-2">
                 {estimateMacrosAction && imageUrl && !clearImage ? (
@@ -199,6 +220,7 @@ function LogFoodFormInner({
                             carbsG: result.carbsG?.toString() ?? "",
                             fatG: result.fatG?.toString() ?? "",
                           }));
+                          setShowMacros(true);
                           toast.success("Macros estimées");
                         } finally {
                           setEstimating(false);
@@ -227,93 +249,105 @@ function LogFoodFormInner({
             </div>
           ) : null}
         </div>
-      ) : (
+      ) : !compact ? (
         <p className="text-xs text-muted-foreground">
           Photos désactivées : ajoute <code>BLOB_READ_WRITE_TOKEN</code> (Vercel Blob) pour activer.
         </p>
+      ) : null}
+
+      {compact && !showMacros ? (
+        <button
+          type="button"
+          className="text-left text-sm font-medium text-primary underline-offset-2 hover:underline"
+          onClick={() => setShowMacros(true)}
+        >
+          Ajouter macros / note
+        </button>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            <div className="space-y-1.5">
+              <Label htmlFor={`calories-${mode}`}>kcal</Label>
+              <Input
+                id={`calories-${mode}`}
+                name="calories"
+                type="number"
+                min={0}
+                max={5000}
+                placeholder="—"
+                value={macroDefaults.calories}
+                onChange={(event) =>
+                  setMacroDefaults((prev) => ({ ...prev, calories: event.target.value }))
+                }
+                className="h-11 md:h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`proteinG-${mode}`}>Prot. (g)</Label>
+              <Input
+                id={`proteinG-${mode}`}
+                name="proteinG"
+                type="number"
+                min={0}
+                max={500}
+                step="0.1"
+                placeholder="—"
+                value={macroDefaults.proteinG}
+                onChange={(event) =>
+                  setMacroDefaults((prev) => ({ ...prev, proteinG: event.target.value }))
+                }
+                className="h-11 md:h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`carbsG-${mode}`}>Gluc. (g)</Label>
+              <Input
+                id={`carbsG-${mode}`}
+                name="carbsG"
+                type="number"
+                min={0}
+                max={500}
+                step="0.1"
+                placeholder="—"
+                value={macroDefaults.carbsG}
+                onChange={(event) =>
+                  setMacroDefaults((prev) => ({ ...prev, carbsG: event.target.value }))
+                }
+                className="h-11 md:h-9"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor={`fatG-${mode}`}>Lip. (g)</Label>
+              <Input
+                id={`fatG-${mode}`}
+                name="fatG"
+                type="number"
+                min={0}
+                max={500}
+                step="0.1"
+                placeholder="—"
+                value={macroDefaults.fatG}
+                onChange={(event) =>
+                  setMacroDefaults((prev) => ({ ...prev, fatG: event.target.value }))
+                }
+                className="h-11 md:h-9"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor={`notes-${mode}`}>Note (optionnel)</Label>
+            <Input
+              id={`notes-${mode}`}
+              name="notes"
+              maxLength={280}
+              placeholder="Ex. resto, maison, faim…"
+              defaultValue={defaults?.notes ?? ""}
+              className="h-11 md:h-9"
+            />
+          </div>
+        </>
       )}
-
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="space-y-2">
-          <Label htmlFor={`calories-${mode}`}>kcal</Label>
-          <Input
-            id={`calories-${mode}`}
-            name="calories"
-            type="number"
-            min={0}
-            max={5000}
-            placeholder="—"
-            value={macroDefaults.calories}
-            onChange={(event) =>
-              setMacroDefaults((prev) => ({ ...prev, calories: event.target.value }))
-            }
-            className="h-11 md:h-9"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`proteinG-${mode}`}>Prot. (g)</Label>
-          <Input
-            id={`proteinG-${mode}`}
-            name="proteinG"
-            type="number"
-            min={0}
-            max={500}
-            step="0.1"
-            placeholder="—"
-            value={macroDefaults.proteinG}
-            onChange={(event) =>
-              setMacroDefaults((prev) => ({ ...prev, proteinG: event.target.value }))
-            }
-            className="h-11 md:h-9"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`carbsG-${mode}`}>Gluc. (g)</Label>
-          <Input
-            id={`carbsG-${mode}`}
-            name="carbsG"
-            type="number"
-            min={0}
-            max={500}
-            step="0.1"
-            placeholder="—"
-            value={macroDefaults.carbsG}
-            onChange={(event) =>
-              setMacroDefaults((prev) => ({ ...prev, carbsG: event.target.value }))
-            }
-            className="h-11 md:h-9"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor={`fatG-${mode}`}>Lip. (g)</Label>
-          <Input
-            id={`fatG-${mode}`}
-            name="fatG"
-            type="number"
-            min={0}
-            max={500}
-            step="0.1"
-            placeholder="—"
-            value={macroDefaults.fatG}
-            onChange={(event) =>
-              setMacroDefaults((prev) => ({ ...prev, fatG: event.target.value }))
-            }
-            className="h-11 md:h-9"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`notes-${mode}`}>Note (optionnel)</Label>
-        <Input
-          id={`notes-${mode}`}
-          name="notes"
-          maxLength={280}
-          placeholder="Ex. resto, maison, faim…"
-          defaultValue={defaults?.notes ?? ""}
-          className="h-11 md:h-9"
-        />
-      </div>
 
       <Button
         type="submit"
@@ -355,5 +389,10 @@ function LogFoodFormInner({
 }
 
 export function LogFoodForm(props: LogFoodFormProps) {
-  return <LogFoodFormInner key={`${props.mode}-${props.defaults?.id ?? "new"}`} {...props} />;
+  return (
+    <LogFoodFormInner
+      key={`${props.mode}-${props.defaults?.id ?? "new"}-${props.compact ? "c" : "f"}`}
+      {...props}
+    />
+  );
 }

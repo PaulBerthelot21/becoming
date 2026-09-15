@@ -20,7 +20,7 @@ import { FoodPageHeader } from "@/components/food/food-page-header";
 import { FoodQuickActions } from "@/components/food/food-quick-actions";
 import { FoodWeekStrip } from "@/components/food/food-week-strip";
 import { LogFoodForm } from "@/components/food/log-food-form";
-import { AddMealFab } from "@/components/food/add-meal-fab";
+import { RegisterAddMeal } from "@/components/food/add-meal-provider";
 
 function defaultMealTypeForNow(): "breakfast" | "lunch" | "dinner" | "snack" {
   const hour = new Date().getHours();
@@ -100,7 +100,7 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
         />
       </div>
 
-      <AddMealFab
+      <RegisterAddMeal
         today={selectedDate}
         photosEnabled={photosEnabled}
         favorites={favorites}
@@ -108,7 +108,6 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
         createFromFavoriteAction={createFoodFromFavorite}
         estimateMacrosAction={estimateFoodMacrosFromImage}
         defaultMealType={mealType}
-        mobileOnly
       />
     </div>
   );
