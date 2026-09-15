@@ -26,7 +26,7 @@ export function WeightChart({ labels, weights, average7d, targetWeightKg }: Weig
 
   if (!hasData) {
     return (
-      <p className="rounded-lg border border-dashed border-zinc-300 px-4 py-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+      <p className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground">
         Logge ton premier poids pour voir la courbe sur 30 jours.
       </p>
     );

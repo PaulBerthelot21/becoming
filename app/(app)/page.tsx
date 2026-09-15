@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { getHabitStreak, getHabitsForUser, toggleHabitCompletion } from "@/lib/habits/actions";
-import { getFoodDay } from "@/lib/food/actions";
+import {
+  createFoodEntry,
+  createFoodFromFavorite,
+  getFoodDay,
+  listFoodFavorites,
+} from "@/lib/food/actions";
 import { getWeeklyInsights } from "@/lib/insights";
 import { getCoachNote } from "@/lib/ai/coach";
-import { startOfUtcDay, toDateKey } from "@/lib/date";
+import { estimateFoodMacrosFromImage } from "@/lib/ai/food-macros";
+import { formatDateFr, startOfUtcDay, toDateKey } from "@/lib/date";
 import { requireWhitelistedSession } from "@/lib/session";
 import { getWeightDashboard, logWeight } from "@/lib/weight/actions";
 import { HabitList } from "@/components/habits/habit-list";
@@ -11,18 +17,28 @@ import { LogWeightForm } from "@/components/weight/log-weight-form";
 import { WeightSummary } from "@/components/weight/weight-summary";
 import { TodayRitual } from "@/components/today-ritual";
 import { WeeklyInsightsCard } from "@/components/weekly-insights-card";
-import { Badge } from "@/components/ui/badge";
+import { ScreenHero } from "@/components/screen-hero";
+import { AddMealFab } from "@/components/food/add-meal-fab";
+import { TodayFoodPanel } from "@/components/food/today-food-panel";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+function defaultMealTypeForNow(): "breakfast" | "lunch" | "dinner" | "snack" {
+  const hour = new Date().getHours();
+  if (hour < 11) return "breakfast";
+  if (hour < 15) return "lunch";
+  if (hour < 21) return "dinner";
+  return "snack";
+}
 
 export default async function TodayPage() {
   const session = await requireWhitelistedSession();
-  const [weight, habits, food, insights, coachNote] = await Promise.all([
+  const [weight, habits, food, insights, coachNote, favorites] = await Promise.all([
     getWeightDashboard(session.user.id),
     getHabitsForUser(session.user.id),
     getFoodDay(session.user.id),
     getWeeklyInsights(session.user.id),
     getCoachNote(session.user.id),
+    listFoodFavorites(session.user.id),
   ]);
 
   const habitsWithStreak = await Promise.all(
@@ -37,50 +53,50 @@ export default async function TodayPage() {
   const todayWeight = weight.todayEntry?.weightKg ?? null;
   const leversDone =
     habitsWithStreak.length === 0 ? false : habitsWithStreak.every((habit) => habit.completedToday);
+  const photosEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  const titleDate = formatDateFr(today, { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <>
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Aujourd&apos;hui</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Check-in coach : pesée, alim, leviers.</p>
-      </div>
+    <div className="space-y-6 md:space-y-8">
+      <ScreenHero
+        eyebrow="Check-in"
+        title="Aujourd'hui"
+        subtitle={<span className="capitalize">{titleDate}</span>}
+      />
 
       {!weight.goal ? (
-        <Card className="border-primary/30 bg-primary/5">
-          <CardHeader>
-            <CardTitle>Définis ton objectif cut</CardTitle>
-            <CardDescription>
-              Départ, cible et rythme (−kg/semaine). Sans ça, la courbe et le coach restent flous.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="h-11 md:h-9">
-              <Link href="/goal">Configurer l&apos;objectif</Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <section className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 to-accent/30 px-4 py-5 md:px-5">
+          <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+            Première étape
+          </p>
+          <h2 className="mt-1 text-lg font-semibold tracking-tight">Définis ton objectif cut</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Départ, cible et rythme (−kg/semaine). Sans ça, courbe et coach restent flous.
+          </p>
+          <Button asChild className="mt-4 h-11 rounded-xl md:h-10">
+            <Link href="/goal">Configurer l&apos;objectif</Link>
+          </Button>
+        </section>
       ) : null}
 
       <TodayRitual
         items={[
           {
             id: "weight",
-            label: "Pesée du jour",
+            label: "Pesée",
             done: weight.weighedToday,
             href: "#pesee",
-            detail: weight.weighedToday ? `${todayWeight?.toFixed(1)} kg` : "Pas encore loggé",
+            detail: weight.weighedToday ? `${todayWeight?.toFixed(1)} kg` : "Pas encore",
           },
           {
             id: "food",
-            label: "Repas notés",
+            label: "Alim",
             done: food.totals.count > 0,
-            href: "/food",
+            href: "#alim",
             detail:
               food.totals.count === 0
                 ? "Aucun repas"
-                : `${food.totals.count} entrée${food.totals.count > 1 ? "s" : ""}${
-                    food.goal ? ` · ${food.totals.calories}/${food.goal.calorieTarget} kcal` : ""
-                  }`,
+                : `${food.totals.count} · ${food.totals.calories || "—"} kcal`,
           },
           {
             id: "habits",
@@ -89,22 +105,25 @@ export default async function TodayPage() {
             href: "#leviers",
             detail:
               habitsWithStreak.length === 0
-                ? "Aucun levier configuré"
-                : `${doneCount}/${habitsWithStreak.length} faits`,
+                ? "À configurer"
+                : `${doneCount}/${habitsWithStreak.length}`,
           },
         ]}
       />
 
       {coachNote ? (
-        <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm leading-relaxed">
+        <p className="rounded-2xl border border-border/70 bg-card/80 px-4 py-3 text-sm leading-relaxed">
           {coachNote}
         </p>
       ) : null}
 
       <WeeklyInsightsCard lines={insights.lines} from={insights.from} to={insights.to} />
 
-      <div className="grid gap-6 md:grid-cols-2 md:items-start">
+      <div className="grid gap-8 md:grid-cols-2 md:items-start md:gap-10">
         <div id="pesee" className="space-y-4">
+          <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+            Poids
+          </p>
           {weight.goal ? (
             <WeightSummary
               insight={weight.insight}
@@ -122,73 +141,23 @@ export default async function TodayPage() {
           />
         </div>
 
-        <Card>
-          <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
-            <div>
-              <CardTitle>Alimentation</CardTitle>
-              <CardDescription>
-                {food.totals.count === 0
-                  ? "Rien de noté aujourd'hui."
-                  : `${food.totals.count} entrée${food.totals.count > 1 ? "s" : ""}`}
-              </CardDescription>
-            </div>
-            <Link
-              href="/food"
-              className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-            >
-              Noter
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {food.goal && food.progress ? (
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>
-                    kcal {food.totals.calories}/{food.goal.calorieTarget}
-                  </span>
-                  <span>
-                    P {food.totals.proteinG}/{food.goal.proteinTargetG}g
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full bg-primary"
-                      style={{ width: `${food.progress.caloriesPct}%` }}
-                    />
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full bg-primary"
-                      style={{ width: `${food.progress.proteinPct}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : food.totals.hasAnyMacros ? (
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">{food.totals.calories} kcal</Badge>
-                <Badge variant="outline">P {food.totals.proteinG}g</Badge>
-              </div>
-            ) : null}
-            {food.entries.length > 0 ? (
-              <ul className="space-y-1.5 text-sm">
-                {food.entries.slice(0, 3).map((entry) => (
-                  <li key={entry.id} className="text-muted-foreground">
-                    <span className="text-foreground">{entry.name}</span>
-                    {entry.calories != null ? ` · ${entry.calories} kcal` : null}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </CardContent>
-        </Card>
+        <TodayFoodPanel
+          today={today}
+          favorites={favorites}
+          createFromFavoriteAction={createFoodFromFavorite}
+          totals={food.totals}
+          goal={food.goal}
+          progress={food.progress}
+          recentNames={food.entries.slice(0, 3)}
+        />
       </div>
 
       <section id="leviers" className="space-y-4">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Leviers</h2>
+            <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+              Leviers
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {habitsWithStreak.length === 0
                 ? "Rien à cocher pour l'instant."
@@ -202,8 +171,35 @@ export default async function TodayPage() {
             Gérer
           </Link>
         </div>
-        <HabitList habits={habitsWithStreak} toggleAction={toggleHabitCompletion} mode="checkin" />
+        {habitsWithStreak.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border/80 bg-muted/20 px-4 py-8 text-center">
+            <p className="text-sm font-medium">Aucun levier</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Ajoute des templates cut sur{" "}
+              <Link href="/habits" className="underline underline-offset-2">
+                Leviers
+              </Link>
+              .
+            </p>
+          </div>
+        ) : (
+          <HabitList
+            habits={habitsWithStreak}
+            toggleAction={toggleHabitCompletion}
+            mode="checkin"
+          />
+        )}
       </section>
-    </>
+
+      <AddMealFab
+        today={today}
+        photosEnabled={photosEnabled}
+        favorites={favorites}
+        createAction={createFoodEntry}
+        createFromFavoriteAction={createFoodFromFavorite}
+        estimateMacrosAction={estimateFoodMacrosFromImage}
+        defaultMealType={defaultMealTypeForNow()}
+      />
+    </div>
   );
 }

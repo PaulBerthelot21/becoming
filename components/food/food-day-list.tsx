@@ -96,8 +96,7 @@ export function FoodDayList({
 
           <ul className="space-y-2.5">
             {section.items.map((item) => {
-              const delay =
-                flatItems.findIndex((entry) => entry.item.id === item.id) * 0.045;
+              const delay = flatItems.findIndex((entry) => entry.item.id === item.id) * 0.045;
 
               return (
                 <motion.li

@@ -20,6 +20,7 @@ import { FoodPageHeader } from "@/components/food/food-page-header";
 import { FoodQuickActions } from "@/components/food/food-quick-actions";
 import { FoodWeekStrip } from "@/components/food/food-week-strip";
 import { LogFoodForm } from "@/components/food/log-food-form";
+import { AddMealFab } from "@/components/food/add-meal-fab";
 
 function defaultMealTypeForNow(): "breakfast" | "lunch" | "dinner" | "snack" {
   const hour = new Date().getHours();
@@ -48,9 +49,10 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
   const photosEnabled = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
   const prev = shiftDateKey(selectedDate, -1);
   const next = shiftDateKey(selectedDate, 1);
+  const mealType = defaultMealTypeForNow();
 
   return (
-    <div className="space-y-6 md:space-y-8">
+    <div className="space-y-6 pb-8 md:space-y-8">
       <FoodPageHeader selectedDate={selectedDate} today={today} prev={prev} next={next} />
 
       <FoodWeekStrip days={week.days} selectedDate={selectedDate} />
@@ -66,13 +68,16 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
             createFromFavoriteAction={createFoodFromFavorite}
             removeFavoriteAction={removeFavorite}
           />
-          <LogFoodForm
-            action={createFoodEntry}
-            today={selectedDate}
-            defaultMealType={defaultMealTypeForNow()}
-            photosEnabled={photosEnabled}
-            estimateMacrosAction={estimateFoodMacrosFromImage}
-          />
+          {/* Full composer on desktop; mobile uses FAB sheet */}
+          <div className="hidden md:block">
+            <LogFoodForm
+              action={createFoodEntry}
+              today={selectedDate}
+              defaultMealType={mealType}
+              photosEnabled={photosEnabled}
+              estimateMacrosAction={estimateFoodMacrosFromImage}
+            />
+          </div>
           {!food.goal ? (
             <p className="text-center text-xs text-muted-foreground md:text-left">
               Pour des barres kcal/protéines,{" "}
@@ -94,6 +99,17 @@ export default async function FoodPage({ searchParams }: FoodPageProps) {
           estimateMacrosAction={estimateFoodMacrosFromImage}
         />
       </div>
+
+      <AddMealFab
+        today={selectedDate}
+        photosEnabled={photosEnabled}
+        favorites={favorites}
+        createAction={createFoodEntry}
+        createFromFavoriteAction={createFoodFromFavorite}
+        estimateMacrosAction={estimateFoodMacrosFromImage}
+        defaultMealType={mealType}
+        mobileOnly
+      />
     </div>
   );
 }

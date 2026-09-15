@@ -50,11 +50,11 @@ export function FoodQuickActions({
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col gap-2">
         <Button
           type="button"
           variant="outline"
-          className="h-11 rounded-xl border-border/80 bg-card/80 md:h-9"
+          className="h-12 w-full justify-start rounded-2xl border-border/80 bg-card/80 md:h-11"
           disabled={pending}
           onClick={() =>
             startTransition(async () => {
@@ -76,62 +76,62 @@ export function FoodQuickActions({
           Copier hier
         </Button>
 
-        {favorites.map((favorite, index) => (
-          <motion.div
-            key={favorite.id}
-            initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.14 + index * 0.03 }}
-            className="inline-flex items-center rounded-xl border border-border/70 bg-secondary/60"
-          >
-            <button
-              type="button"
-              disabled={pending}
-              className="h-11 max-w-[14rem] truncate px-3 text-left text-sm font-medium md:h-9"
-              onClick={() =>
-                startTransition(async () => {
-                  const formData = new FormData();
-                  formData.set("favoriteId", favorite.id);
-                  formData.set("date", selectedDate);
-                  const result = await createFromFavoriteAction(formData);
-                  if (result.error) {
-                    toast.error(result.error);
-                    return;
+        {favorites.length > 0 ? (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {favorites.map((favorite, index) => (
+              <motion.div
+                key={favorite.id}
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.14 + index * 0.03 }}
+                className="relative flex min-h-14 items-stretch rounded-2xl border border-border/70 bg-secondary/50"
+              >
+                <button
+                  type="button"
+                  disabled={pending}
+                  className="flex min-w-0 flex-1 flex-col items-start justify-center px-4 py-3 text-left"
+                  onClick={() =>
+                    startTransition(async () => {
+                      const formData = new FormData();
+                      formData.set("favoriteId", favorite.id);
+                      formData.set("date", selectedDate);
+                      const result = await createFromFavoriteAction(formData);
+                      if (result.error) {
+                        toast.error(result.error);
+                        return;
+                      }
+                      toast.success(`${favorite.name} ajouté`);
+                    })
                   }
-                  toast.success(`${favorite.name} ajouté`);
-                })
-              }
-            >
-              {favorite.name}
-              {favorite.calories != null ? (
-                <span className="text-muted-foreground"> · {favorite.calories}</span>
-              ) : favorite.mealType ? (
-                <span className="text-muted-foreground">
-                  {" "}
-                  · {mealTypeLabels[favorite.mealType]}
-                </span>
-              ) : null}
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              aria-label={`Retirer ${favorite.name}`}
-              className="flex h-11 w-9 items-center justify-center text-muted-foreground hover:text-foreground md:h-9"
-              onClick={() =>
-                startTransition(async () => {
-                  const result = await removeFavoriteAction(favorite.id);
-                  if (result.error) {
-                    toast.error(result.error);
-                    return;
+                >
+                  <span className="truncate font-medium">{favorite.name}</span>
+                  <span className="mt-0.5 text-xs text-muted-foreground">
+                    {favorite.mealType ? mealTypeLabels[favorite.mealType] : "1 tap"}
+                    {favorite.calories != null ? ` · ${favorite.calories} kcal` : ""}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={pending}
+                  aria-label={`Retirer ${favorite.name}`}
+                  className="flex w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+                  onClick={() =>
+                    startTransition(async () => {
+                      const result = await removeFavoriteAction(favorite.id);
+                      if (result.error) {
+                        toast.error(result.error);
+                        return;
+                      }
+                      toast.success("Favori retiré");
+                    })
                   }
-                  toast.success("Favori retiré");
-                })
-              }
-            >
-              <X className="size-3.5" />
-            </button>
-          </motion.div>
-        ))}
+                >
+                  <X className="size-3.5" />
+                </button>
+              </motion.div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {favorites.length === 0 ? (

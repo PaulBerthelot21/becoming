@@ -1,6 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { CheckCircle2, Circle } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 type RitualItem = {
@@ -16,43 +18,59 @@ type TodayRitualProps = {
 };
 
 export function TodayRitual({ items }: TodayRitualProps) {
+  const reduceMotion = useReducedMotion();
   const doneCount = items.filter((item) => item.done).length;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Rituel du jour</CardTitle>
-        <CardDescription>
-          {doneCount}/{items.length} — coach check-in
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-2">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg border px-3 py-2.5 transition hover:bg-accent",
-                  item.done ? "border-primary/30 bg-primary/5" : "border-border",
-                )}
-              >
-                {item.done ? (
-                  <CheckCircle2 className="size-5 shrink-0 text-primary" />
-                ) : (
-                  <Circle className="size-5 shrink-0 text-muted-foreground" />
-                )}
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{item.label}</p>
-                  {item.detail ? (
-                    <p className="truncate text-xs text-muted-foreground">{item.detail}</p>
-                  ) : null}
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    <motion.section
+      initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.06, duration: 0.32 }}
+      className="space-y-3"
+    >
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
+            Rituel
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {doneCount}/{items.length} faits
+          </p>
+        </div>
+      </div>
+
+      <ul className="grid gap-2 sm:grid-cols-3">
+        {items.map((item, index) => (
+          <motion.li
+            key={item.id}
+            initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 + index * 0.04, duration: 0.28 }}
+          >
+            <Link
+              href={item.href}
+              className={cn(
+                "flex h-full min-h-[4.5rem] items-start gap-3 rounded-2xl border px-3.5 py-3 transition",
+                item.done
+                  ? "border-primary/25 bg-primary/8"
+                  : "border-border/70 bg-card/80 hover:border-primary/20 hover:bg-card",
+              )}
+            >
+              {item.done ? (
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-primary" />
+              ) : (
+                <Circle className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium leading-snug">{item.label}</p>
+                {item.detail ? (
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.detail}</p>
+                ) : null}
+              </div>
+            </Link>
+          </motion.li>
+        ))}
+      </ul>
+    </motion.section>
   );
 }
